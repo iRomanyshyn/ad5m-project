@@ -29,6 +29,17 @@ Before adopting any individual change inspired by a historical source:
 5. Record the rationale, review, and software/hardware verification in the
    scoped task.
 
+## Interpretation
+
+This policy is deliberately strict because these sources can influence a
+privileged embedded firmware build. It is not a ban on reading historical code,
+learning from it, or porting a specific useful idea.
+
+The purpose is to prevent an old third-party tree from silently becoming a
+trusted upstream or executable supply-chain dependency. If this policy becomes
+unnecessarily restrictive, change it explicitly through a later ADR rather
+than bypassing it in an implementation task.
+
 ## Consequences
 
 This approach may take longer than copying a historical implementation, but
