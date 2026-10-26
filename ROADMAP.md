@@ -78,9 +78,12 @@ legacy submodule dependency.
 - official Buildroot 2025.02 LTS maintenance
 - audit historical AD5M Buildroot modifications
 - dependency completeness
-- memory/resource management
+- memory/resource management; measure real pressure before changing defaults;
+  see `tasks/AD5M-006-memory-pressure-zram-swap.md`
 - logging limits
-- possible zram/swap experiments
+- evaluate zram first, then internal-flash or USB-backed swap only if justified
+  by measurements and failure-mode testing; see
+  `tasks/AD5M-006-memory-pressure-zram-swap.md`
 - service startup optimization
 
 ## Security
