@@ -1,6 +1,7 @@
 # AD5M-001 Buildroot integration contract
 
 Status: proposed
+Priority: first implementation task
 
 ## Goal
 
@@ -15,6 +16,10 @@ historical third-party repository. The canonical base repository instead tracks
 official Buildroot on `ad5m-2025.02`. This prevents reproducing a package from
 the three canonical repositories alone and violates the project's untrusted
 historical-source policy.
+
+This is intentionally the first implementation task. Firmware features should
+not be built on top of a Buildroot source relationship that the project intends
+to remove.
 
 ## Repositories affected
 
@@ -32,6 +37,14 @@ historical-source policy.
 - Keep AD5M-specific external-tree content in `ad5m_enhanced_mod` and generic
   Buildroot content in `buildroot-flashforge-ad5m`.
 - Ensure generated output remains local and ignored.
+- Do not treat this as a URL-only submodule replacement. Audit the exact delta
+  between the Buildroot revision expected by the current Klipper Mod build
+  system and the canonical official-Buildroot-derived repository.
+- Identify which required behavior already lives in the Klipper Mod external
+  tree, which is present in official Buildroot 2025.02, and which genuinely
+  requires a change to the canonical Buildroot repository.
+- Prefer the smallest explicit integration contract that keeps the two source
+  repositories independently maintainable.
 
 ## Non-goals
 
@@ -41,10 +54,18 @@ historical-source policy.
 
 ## Proposed implementation
 
-Inspect the existing build wrapper and external-tree interface, define a
-reviewed source-selection mechanism that uses the canonical Buildroot checkout
-or a clearly pinned clone of it, and remove the legacy submodule requirement.
-Document the new bootstrap and build commands in DEVELOPMENT.md.
+Inspect the existing build wrapper and external-tree interface. Before changing
+`.gitmodules` or source-selection logic, compare the legacy Buildroot revision
+used by the current build with the canonical `ad5m-2025.02` tree and classify
+every required difference.
+
+Then define a reviewed source-selection mechanism that uses the canonical
+Buildroot checkout or a clearly pinned clone of it, remove the legacy submodule
+requirement, and document the bootstrap/build commands in DEVELOPMENT.md.
+
+A simple replacement of the legacy submodule URL is not sufficient unless the
+audit proves the canonical tree already provides every required dependency and
+behavior.
 
 ## Acceptance criteria
 
