@@ -21,11 +21,11 @@ Primary goals:
 
 Local path:
 
-../flashforge_ad5m_klipper_mod
+../ad5m_enhanced_mod
 
 Our repository:
 
-https://github.com/iRomanyshyn/flashforge_ad5m_klipper_mod
+https://github.com/iRomanyshyn/ad5m_enhanced_mod
 
 Primary upstream:
 
@@ -55,6 +55,12 @@ The maintained branch is based on the official Buildroot 2025.02 LTS
 series.
 
 Third-party Buildroot forks are not authoritative upstreams.
+
+Historical third-party sources may be consulted for ideas or individually
+identified changes, but are untrusted inputs. Do not merge, rebase onto, or
+bulk-import their history. Every candidate change requires an explicit,
+heightened security review before adoption; see
+`decisions/0001-untrusted-historical-sources.md`.
 
 ## Platform
 

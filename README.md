@@ -12,7 +12,7 @@ This repository contains:
 
 Source code lives in the sibling repositories:
 
-- flashforge_ad5m_klipper_mod
+- ad5m_enhanced_mod
 - buildroot-flashforge-ad5m
 
 See PROJECT.md for project architecture.

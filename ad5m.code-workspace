@@ -1,0 +1,16 @@
+{
+    "folders": [
+        {
+            "name": "AD5M Project",
+            "path": "."
+        },
+        {
+            "name": "AD5M Klipper Mod",
+            "path": "../ad5m_enhanced_mod"
+        },
+        {
+            "name": "AD5M Buildroot",
+            "path": "../buildroot-flashforge-ad5m"
+        }
+    ]
+}

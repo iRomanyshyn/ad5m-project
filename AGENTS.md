@@ -7,7 +7,7 @@ Klipper Mod project.
 
 Sibling repositories:
 
-- ../flashforge_ad5m_klipper_mod
+- ../ad5m_enhanced_mod
 - ../buildroot-flashforge-ad5m
 
 This repository contains project-wide context, tasks and architectural
@@ -29,7 +29,7 @@ Buildroot tree if it can cleanly live in the Klipper Mod external tree.
 
 ## Repository responsibilities
 
-### flashforge_ad5m_klipper_mod
+### ad5m_enhanced_mod
 
 Owns project-specific integration, including:
 
@@ -66,6 +66,19 @@ decisions/ contains architectural decisions that should survive individual
 tasks.
 
 Task-specific discoveries belong in the task file rather than PROJECT.md.
+
+## Capturing ideas
+
+Do not leave actionable ideas, risks, or proposed follow-up work only in chat.
+Record them before ending the current work:
+
+- add concise, project-wide ideas to ROADMAP.md;
+- create or update a scoped task file for a concrete proposed change;
+- create an ADR for a long-lived architectural decision.
+
+Do not turn this into a conversation transcript. Mark unapproved work as
+`proposed`, retain known assumptions and limitations, and do not begin it until
+the user authorizes that task.
 
 ## Git behavior
 

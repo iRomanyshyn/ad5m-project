@@ -4,6 +4,19 @@ This file is a high-level backlog.
 
 Actual implementation work should use scoped task files under tasks/.
 
+## Project foundations and reproducibility
+
+- replace the legacy historical Buildroot submodule with a reviewed build
+  integration contract; see `tasks/AD5M-001-buildroot-integration-contract.md`
+- record a compatibility matrix for both printer variants, board/MCU revisions,
+  stock-host versions, and validated cross-repository commit pairs
+- define a release manifest with component revisions and hashes; add SBOM,
+  license review, release integrity, and signing as appropriate
+- define recovery and fault-injection expectations for power loss, storage
+  exhaustion, interrupted updates, MCU loss, and network loss
+- define a hardware test matrix that keeps software validation distinct from
+  physical-printer validation
+
 ## Reliability
 
 - pause and filament-runout timeout behavior
@@ -33,6 +46,14 @@ Actual implementation work should use scoped task files under tasks/.
 ## UI
 
 - HelixScreen integration
+- provide a documented primary web UI without requiring users to enter
+  non-standard port `4001`; see `tasks/AD5M-004-stable-web-and-camera-access.md`
+- keep camera configuration stable when the printer address changes; prefer a
+  reviewed stable name or same-origin/proxy design over a raw IP address; see
+  `tasks/AD5M-004-stable-web-and-camera-access.md`
+- evaluate an ergonomic HelixScreen layout that separates easy-to-mistap
+  controls on the resistive display; see
+  `tasks/AD5M-005-helixscreen-touch-layout-ergonomics.md`
 - Wi-Fi/network configuration
 - filament load workflow
 - filament unload workflow
@@ -69,3 +90,8 @@ Actual implementation work should use scoped task files under tasks/.
 - reproducible build documentation
 - component/version manifest
 - diagnostics export
+- establish a layered test strategy: static checks, Klipper regression and
+  batch G-code tests, mocked Klipper/Moonraker API scenarios, generic QEMU
+  userspace smoke tests, and hardware-in-the-loop testing; see
+  `tasks/AD5M-002-automated-validation-foundation.md` and
+  `tasks/AD5M-003-printer-simulation-and-mock-strategy.md`
