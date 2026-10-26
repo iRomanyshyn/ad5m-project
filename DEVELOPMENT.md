@@ -144,13 +144,62 @@ A workstation is ready only when all three repositories exist, expected
 remotes are present, the Buildroot checkout is on `ad5m-2025.02`, and there
 are no unexplained modifications.
 
-## Open the workspace
+## VS Code and Codex
+
+Ensure the VS Code command-line launcher is available:
+
+```bash
+code --version
+```
+
+Install the OpenAI Codex/ChatGPT extension through VS Code before starting
+agent-assisted work. The editor extension is a development convenience, not a
+build dependency: firmware builds must remain reproducible without depending on
+a particular editor or extension version.
+
+When troubleshooting editor or agent regressions, record the locally working
+VS Code and Codex extension versions in an ignored local note rather than
+hard-coding them into the project unless the project genuinely requires a
+specific version.
+
+Useful local checks include:
+
+```bash
+code --version
+code --list-extensions --show-versions | grep -E '^openai\\.'
+```
 
 The tracked workspace uses relative sibling paths and can be opened from any
 checkout location:
 
 ```bash
 code ~/Projects/ad5m/ad5m-project/ad5m.code-workspace
+```
+
+If opening the workspace makes VS Code unresponsive, first distinguish an
+editor/extension regression from a repository or workspace problem. Do not
+modify project source merely to work around an editor-extension failure.
+
+## Git identity and public commit privacy
+
+These repositories are public. Before making commits on a new workstation,
+check the configured author identity:
+
+```bash
+git config --global user.name
+git config --global user.email
+```
+
+If the personal email address should not be published in commit metadata,
+configure the GitHub-provided `noreply` address before creating new commits.
+Do not rewrite existing published history solely for this reason unless the
+user explicitly chooses to do so.
+
+Verify the effective identity in a repository with:
+
+```bash
+git config user.name
+git config user.email
 ```
 
 ## Current build status
