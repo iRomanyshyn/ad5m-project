@@ -4,6 +4,15 @@ This file is a high-level backlog.
 
 Actual implementation work should use scoped task files under tasks/.
 
+A task with `Status: proposed` records an idea or candidate work item; it is
+not authorization to implement it and does not by itself define execution
+order. Review proposed tasks with the user before starting them.
+
+The current first implementation priority is
+`tasks/AD5M-001-buildroot-integration-contract.md`. Establish the canonical
+Buildroot relationship before firmware features are developed on top of the
+legacy submodule dependency.
+
 ## Project foundations and reproducibility
 
 - replace the legacy historical Buildroot submodule with a reviewed build
@@ -46,13 +55,15 @@ Actual implementation work should use scoped task files under tasks/.
 ## UI
 
 - HelixScreen integration
-- provide a documented primary web UI without requiring users to enter
-  non-standard port `4001`; see `tasks/AD5M-004-stable-web-and-camera-access.md`
+- proposed: provide a documented primary web UI without requiring users to enter
+  non-standard port `4001`; review the task before implementation; see
+  `tasks/AD5M-004-stable-web-and-camera-access.md`
 - keep camera configuration stable when the printer address changes; prefer a
   reviewed stable name or same-origin/proxy design over a raw IP address; see
   `tasks/AD5M-004-stable-web-and-camera-access.md`
-- evaluate an ergonomic HelixScreen layout that separates easy-to-mistap
-  controls on the resistive display; see
+- proposed: evaluate an ergonomic HelixScreen layout that separates
+  easy-to-mistap controls on the resistive display; review the task before
+  implementation; see
   `tasks/AD5M-005-helixscreen-touch-layout-ergonomics.md`
 - Wi-Fi/network configuration
 - filament load workflow
