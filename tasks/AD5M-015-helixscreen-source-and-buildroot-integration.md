@@ -117,6 +117,33 @@ build or an approval of any dependency.
   from the canonical Buildroot downloader only; it has not been run for
   HelixScreen.
 
+### Runtime-asset and staging audit (2026-10-27)
+
+The checked-out root source excluding `.git` occupies about 340 MiB, largely
+because `assets/test_gcodes` alone is about 179 MiB.  The upstream `install`
+target does **not** copy those test G-codes, but it does unconditionally copy
+all of `assets/fonts`, `assets/images`, `assets/sounds`, `assets/config`, and
+`filaments.json`.  At this candidate revision that staged asset set is about
+73 MiB: approximately 41 MiB of fonts and 32 MiB of images.  This is a
+source-level size inventory, not a target-image measurement.
+
+That install behaviour is too broad to accept blindly on the constrained
+AD5M.  It also cannot be safely trimmed by filename guessing: production code
+uses the installed CJK font directory, runtime printer-image fallbacks,
+pre-rendered splash assets, configuration seeds, sounds, and the filament
+catalog.  Before the package is enabled, create a reviewed AD5M runtime-asset
+manifest that maps every staged file class to a code/config consumer and
+measures the resulting image, RAM and startup cost.  The package may invoke
+the upstream `install DESTDIR=...` only through a staging wrapper that removes
+or avoids manifest-excluded files deterministically; it must never copy
+upstream test data or use a hand-waved whole-asset-tree install.
+
+The upstream root target also includes a Bluetooth-plugin target whose build
+is conditional on detected libraries.  The first AD5M package must continue
+to invoke only explicit reviewed runtime executables, and must make feature
+selection independent of which libraries happen to exist in the build host or
+SDK.
+
 ## Repositories affected
 
 - ad5m_enhanced_mod
@@ -190,6 +217,8 @@ build or an approval of any dependency.
 - The staged image has `/opt/helixscreen` assets and a writable persistent
   configuration directory, with no default setting that overwrites a user's
   dashboard layout on rebuild/upgrade.
+- The staged runtime-asset manifest is reviewed and its image, RAM and startup
+  impact is measured; no test G-code or unreviewed asset tree is installed.
 - The service does not retain a competing UI and fails without destabilizing
   Klipper or Moonraker.
 - Host mock, target build, and physical-printer evidence are reported as three
@@ -211,6 +240,8 @@ Not run.
 
 - Audit the complete source/dependency graph and target libraries for the
   `v1.0.6` candidate, including recursive submodules and build-time downloads.
+- Produce and review the minimal AD5M runtime-asset manifest before accepting
+  the upstream staging target.
 - Confirm or reject the candidate after that audit.
 - Measure the packaged image's disk/RAM impact and boot behavior.
 - Determine exact framebuffer, touch device, calibration, and backlight values
