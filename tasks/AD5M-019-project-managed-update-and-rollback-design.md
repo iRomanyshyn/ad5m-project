@@ -106,6 +106,40 @@ require forward *and backward* database/state compatibility until the health
 check commits the switch. A rollback must not be forced to consume a state
 format that only the failed candidate understands.
 
+### Current package identity baseline (2026-10-27)
+
+`build_scripts/build.sh` currently compresses `rootfs.tar` into
+`chroot.tar.xz`, then creates a USB `.tgz` containing that file and all files
+under `device_files/install`. Its filename derives from
+`git describe --tags --always --dirty`; the Pro-named package is a byte copy of
+the same archive. The later `checksums` helper emits an external `md5sums`
+file. Neither the package nor the installer contains a signed manifest, an
+expected digest, a release key identifier, a minimum/maximum compatible state
+schema, or a complete component inventory. The install script merely prints
+MD5 values for a log.
+
+That baseline is useful for USB distribution but not for update authority. A
+future immutable project manifest must be canonicalized before signing and at
+minimum bind together:
+
+- format/version and unique release identifier;
+- supported machine identifiers and minimum vendor-host compatibility;
+- every staged payload's filename, length and SHA-256 digest, including the
+  privileged updater/recovery pieces rather than only the root filesystem;
+- exact project source revision, reviewed Buildroot contract revision, selected
+  variant/plugins and the full component/source inventory produced by the
+  release build;
+- persistent-state schema and migration/rollback compatibility range;
+- an explicit declaration that the release contains no MCU firmware operation;
+- signing key identifier, signature algorithm, signed creation time and an
+  expiry/revocation policy that still permits offline recovery.
+
+The installed verifier must reject duplicate fields, unrecognized critical
+fields, path traversal, payloads not enumerated by the manifest, malformed
+canonical encoding and a release that is validly signed but incompatible with
+the device. A human-facing version string may be displayed, but it must not be
+used as the authorization decision or rollback ordering on its own.
+
 ## Repositories affected
 
 - ad5m-project
@@ -120,6 +154,11 @@ format that only the failed candidate understands.
 - Verify a project-controlled signature and artifact digest before staging; do
   not treat transport TLS, a release-page URL or a checksum served beside the
   artifact as sufficient authority by itself.
+- Put the immutable release manifest and its signature inside the staged
+  update, and have the small installed verifier validate the manifest's full
+  payload inventory, compatibility and update policy before extracting or
+  switching anything. A package filename, `git describe` label or detached MD5
+  list is display/logging metadata, not authorization.
 - Keep the current release bootable until the candidate has been completely
   staged and verified. Define the exact storage layout and atomic switch
   primitive from the actual AD5M install layout; do not assume A/B slots exist
