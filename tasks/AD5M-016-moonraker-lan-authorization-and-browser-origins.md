@@ -76,9 +76,7 @@ This is a candidate design, not an approved configuration or implementation.
    the whole LAN trusted indefinitely.
 4. Allow CORS only for exact supported UI origins such as
    `http://<device-name>.local`; slicer requests do not need a browser CORS
-   exception.  Direct Moonraker operation should not trust forwarded headers;
-   review the exact behaviour of the project's pinned Moonraker version before
-   setting `use_xheaders`.
+   exception.
 5. Treat a narrow, user-selected private-LAN trusted-client range as an
    explicit compatibility profile, not the secure default.  It can help older
    clients that cannot send an API key, but every host in that range receives
@@ -100,6 +98,51 @@ client identity.  The exact option names and security semantics must be
 verified against the project's pinned Moonraker commit (`71f9e677…`), not just
 current upstream documentation.
 
+### Pinned Moonraker `v0.9.3` audit (2026-10-27)
+
+The exact source at `71f9e677b81afcc6b99dd5002f595025c38edc7b` was inspected
+in a temporary clone; `git fsck --no-dangling` passed.  No binary was built or
+run.  The source confirms that this version supports JWT user logins, a single
+system API key, one-shot tokens, `force_logins`, native HTTP upload, and the
+partial OctoPrint upload API.  The system API key is a device-wide credential,
+not a separately revocable per-slicer token; regenerating it disrupts every
+slicer using it.
+
+There is a material constraint absent from current documentation assumptions:
+v0.9.3 starts Tornado with `xheaders=True` unconditionally.  It has no
+`use_xheaders` configuration option.  A direct network client can therefore
+supply forwarding headers, so an IP-based `trusted_clients` list must not be
+treated as protection for the public TCP 7125 listener.
+
+The version's authorization order is useful for a secure direct-slicer mode:
+it checks a JWT and then the API key before IP trust; once `force_logins: true`
+and at least one normal user exists, it rejects the trusted-client fallback.
+Thus the candidate steady state is:
+
+```ini
+[authorization]
+enable_api_key: true
+force_logins: true
+# no LAN trusted_clients entries
+cors_domains:
+  http://<device-name>.local
+```
+
+This permits a browser to use a user login/JWT and a slicer to use the API key
+over direct TCP 7125.  It is not a complete deployment design yet: the first
+normal user cannot be created from an unauthenticated network client, while
+`force_logins` is not effective until that user exists.  A safe bootstrap path
+is now an explicit release gate.  Viable candidates are installer-time
+provisioning, a local-console/SSH command after an explicit credential change,
+or a later physical-screen pairing flow.  Do not open a temporary trusted LAN
+range or ship a shared bootstrap password.
+
+A proxy is consequently optional for steady-state authentication, but can
+provide a safer compatibility boundary if it binds Moonraker to loopback and
+sanitizes/replaces all client-provided forwarding headers before proxying.  It
+still needs Moonraker JWT/API-key authorization and does not remove the
+bootstrap requirement.
+
 ## Acceptance criteria
 
 - No release variant seeds `trusted_clients: 0.0.0.0/0` or `cors_domains: *`.
@@ -107,6 +150,8 @@ current upstream documentation.
   their documented local origins.
 - Native Moonraker slicer upload with an API key and the retained
   OctoPrint-compatibility upload path are tested independently.
+- The selected first-user bootstrap method is tested so no unauthenticated LAN
+  client can claim a trusted identity with a forwarding header.
 - Upgrade does not silently grant new remote control to a previously
   untrusted network client.
 - Security, software-only, and physical-LAN test evidence are distinct.
