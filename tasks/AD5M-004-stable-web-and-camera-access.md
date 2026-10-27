@@ -127,6 +127,36 @@ They must not be carried forward or widened merely to make the browser URL
 convenient.  AD5M-016 records the separate authorization and browser-origin
 decision that blocks implementation of this task.
 
+### 2026-10-27 camera-listener boundary audit
+
+The camera hot-plug script starts the pinned `ustreamer` 6.29 with `-s* -p
+8080`, without `--user`, `--passwd`, or `--allow-origin`.  In this version,
+`-s` supplies the listener host (whose default would otherwise be
+`127.0.0.1`), HTTP Basic authentication is disabled unless a user is
+configured, and CORS response headers are disabled unless an origin is
+configured.  The source exposes `/stream` and `/snapshot` (and documented
+query-form aliases).
+
+Thus the existing script requests a non-loopback-style listener but provides
+neither camera authentication nor a CORS policy.  The exact bind result of
+the literal `*` must be confirmed in the built image with `ss -ltnp` and from
+another LAN host; this audit does not substitute source inspection for that
+test.  Irrespective of the bind detail, a direct `:8080` camera URL is a
+separate resource from the browser UI and Moonraker: a Mainsail login or
+Moonraker JWT does not protect it.
+
+For the low-resource, no-proxy candidate, the product must make that boundary
+explicit: `http://<device-name>.local:8080/stream` is a separately exposed
+local-LAN camera endpoint, addressed by the persistent mDNS name so DHCP
+changes do not matter.  Do not add `Access-Control-Allow-Origin: *`, nor a
+fixed Basic-auth credential, merely to make embedding convenient.  First test
+the final UI's image/stream behavior with CORS disabled and the intended LAN
+audience.  If camera access must instead share the UI's authenticated,
+same-origin boundary, introduce and review a real reverse proxy that owns the
+frontend route and keeps ustreamer loopback-only; BusyBox `httpd` in this
+image does not provide that proxy role.  That is a later, resource-measured
+option rather than an implicit consequence of choosing port 80 or mDNS.
+
 ## Verification
 
 Repository and official-documentation inspection only.  No listener,
@@ -145,5 +175,9 @@ Not run.
    the camera is absent.
 3. Design a persistent, collision-resistant device name and a camera-default
    migration that never overwrites a user's webcam database entry.
-4. Build static/service checks, then test browser access, mDNS resolution,
+4. Select and document the camera audience: a separately exposed local-LAN
+   endpoint, or a reviewed same-origin authenticated proxy.  For the former,
+   confirm ustreamer's actual bind scope and test final UI embedding without
+   widening CORS.
+5. Build static/service checks, then test browser access, mDNS resolution,
    camera recovery and access control on a physical LAN separately.
