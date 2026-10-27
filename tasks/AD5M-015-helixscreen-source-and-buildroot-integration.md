@@ -38,8 +38,6 @@ properties can be inspected in its staged binary.
 
 The candidate has 15 direct Git submodules.  The table records Gitlink
 identities and the upstream's own declared licenses; none is accepted yet.
-Recursive submodules and generated/downloaded build inputs remain to be
-discovered and audited.
 
 | Path | Declared upstream URL | Gitlink commit | Declared license | Review state |
 | --- | --- | --- | --- | --- |
@@ -62,6 +60,25 @@ discovered and audited.
 The upstream `COPYRIGHT` also declares bundled components, including minilzo
 (GPL-2.0-or-later), quirc (ISC), and libraries nested in submodules.  This is
 why checking only the root GPL notice is insufficient.
+
+### Git-submodule closure audit (2026-10-27)
+
+The root `.gitmodules` and every direct Gitlink were read from Git object
+databases at the fixed commits in the inventory above. Each of the 15 pinned
+objects exists and is a commit; `git fsck --no-dangling` passed for the root
+and each direct source object database. At those exact commits, none of the
+15 direct sources has a `.gitmodules` file or a mode-`160000` Gitlink.
+Consequently the Git-submodule closure of this candidate is exactly the root
+repository plus the 15 listed direct sources: there is no recursively fetched
+Git source to add at this revision.
+
+This is source identity and fetch-graph evidence, not dependency approval.
+It does not cover vendored code, generated inputs, package-manager downloads,
+or build-time network access. A future Buildroot recipe must retain the root
+commit, use the canonical `GIT_SUBMODULES=YES` fetcher, and make a
+no-network-after-fetch build an explicit verification requirement. Any
+upstream update that changes the root commit or a Gitlink must repeat this
+closure audit before it is eligible for packaging.
 
 ### Production build-boundary findings (2026-10-27)
 
@@ -87,7 +104,7 @@ build or an approval of any dependency.
   quirc, GLM, fonts/translations, libhv, WPA client, libnl, spdlog/fmt, zlib,
   pthreads and optional OpenSSL.  `cpp-terminal`, FTXUI, OpenVDB, SDL2,
   linenoise and the Bluetooth plugin are not part of that initial target
-  graph.  This is a preliminary graph: recursive submodules and generated
+  graph. The Git-submodule closure is now known, but vendored and generated
   inputs still need their own identity and license review.
 - Current upstream cross-build logic builds libhv, WPA client and libnl from
   source submodules, probes spdlog/fmt with host-oriented paths, and adds
@@ -176,9 +193,10 @@ is a dependency-selection candidate, not an enabled package configuration.
 - Confirm or reject `v1.0.6` after reviewing its source graph, then pin the
   selected official release/tag and record the source identity, archive/Git
   integrity evidence, license, and release-selection rationale.
-- Review every fetched submodule and external dependency for source identity,
-  license, Buildroot ownership, and whether it can be replaced by an existing
-  Buildroot package.  Do not enable recursive Git checkout before that review.
+- Review every fetched direct submodule and external dependency for source
+  identity, license, Buildroot ownership, and whether it can be replaced by an
+  existing Buildroot package. The fixed candidate has no nested Git
+  submodules; repeat the closure audit before accepting any changed Gitlink.
 - Do not add a second Wi-Fi-management stack; any HelixScreen network-control
   path must be explicitly compiled out or integrated with the selected IWD
   design after a separate review.
@@ -251,11 +269,13 @@ is a dependency-selection candidate, not an enabled package configuration.
 
 ## Verification
 
-Upstream source inspection and Makefile variable evaluation only.  The
+Upstream source inspection and Makefile variable evaluation only. The
 inspection evaluated the `ad5m-br` linker flags with a supplied cross-prefix;
-it did not compile, link or execute HelixScreen.  No package has been created,
-no source submodule has been accepted, and no HelixScreen binary, installer,
-updater, or deployment script has been run.
+it did not compile, link or execute HelixScreen. A metadata-only Git closure
+audit confirmed the fixed root commit and all 15 direct Gitlink commits, with
+no nested Gitlinks at those revisions. No package has been created, no source
+submodule has been accepted, and no HelixScreen binary, installer, updater, or
+deployment script has been run.
 
 ## Hardware verification
 
@@ -263,8 +283,9 @@ Not run.
 
 ## Remaining work
 
-- Audit the complete source/dependency graph and target libraries for the
-  `v1.0.6` candidate, including recursive submodules and build-time downloads.
+- Audit vendored code, generated inputs, build-time downloads and target
+  libraries for the `v1.0.6` candidate; the fixed Git-submodule closure is
+  recorded above and contains no nested Git source.
 - Produce and review the minimal AD5M runtime-asset manifest before accepting
   the upstream staging target.
 - Decide and validate the Buildroot-versus-pinned-source owner for every
