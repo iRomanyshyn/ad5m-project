@@ -60,19 +60,21 @@ upstreamable HelixScreen change.
 
 ### 2026-10-27 upstream discovery
 
-The official upstream repository was examined at immutable commit
-[`6eb61edc55244d62cc76a294203bbb9e012161ef`](https://github.com/prestonbrown/helixscreen/commit/6eb61edc55244d62cc76a294203bbb9e012161ef).
+The official upstream repository's latest stable tag at the time of review is
+[`v1.0.6`](https://github.com/prestonbrown/helixscreen/tree/v1.0.6), resolving
+to immutable commit
+[`11230009fa09b4509d0d05f482feaeef2e94c854`](https://github.com/prestonbrown/helixscreen/commit/11230009fa09b4509d0d05f482feaeef2e94c854).
 It is GPL-3.0-or-later and is a C++17/LVGL application, not a Python/GTK
-screen.  Its tracked `VERSION.txt` identifies that snapshot as
-`1.1.0-beta.13`, despite the repository README describing a stable 1.0
-release.  We must choose a reviewed release/tag or a specifically reviewed
-commit before packaging; the moving `main` branch is not a release source.
+screen.  The annotated tag has no cryptographic signature.  It is the
+candidate source for AD5M-015, not yet an accepted package source; the moving
+`main` branch is not a release source.
 
 Upstream has a Buildroot-oriented AD5M target,
 `PLATFORM_TARGET=ad5m-br`, that deliberately uses the framebuffer backend,
-the Buildroot cross-toolchain, dynamic target libraries, and no SDL.  It
-explicitly disables its mock backend.  The product image must therefore be a
-separate Buildroot package, while UI layout review must use a native host
+the Buildroot cross-toolchain, dynamic target libraries, no SDL, no GLES, and
+no screensaver.  In `v1.0.6` that target does *not* disable mock backends by
+itself, so a production package must explicitly set `ENABLE_MOCKS=no` and
+disable the remote-control server.  UI layout review still uses a native host
 build with `--test`; no mock result represents an AD5M runtime image or its
 touch panel.
 

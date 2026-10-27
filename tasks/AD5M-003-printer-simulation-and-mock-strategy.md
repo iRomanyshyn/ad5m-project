@@ -65,11 +65,11 @@ Not run.
 ## Remaining work
 
 The first selected workflow is HelixScreen dashboard-layout review (AD5M-005).
-The official HelixScreen source, inspected at commit
-`6eb61edc55244d62cc76a294203bbb9e012161ef`, has a native `--test` mode
+The official HelixScreen `v1.0.6` candidate source, resolving to commit
+`11230009fa09b4509d0d05f482feaeef2e94c854`, has a native `--test` mode
 which uses a mock printer and can produce a screenshot.  Its AD5M Buildroot
-target disables mocks, so this is strictly a host-side UI workflow, not a
-target-image or touch-driver test.
+target requires an explicit production `ENABLE_MOCKS=no` setting, so this is
+strictly a host-side UI workflow, not a target-image or touch-driver test.
 
 Before running it, AD5M-015 must select and audit the fixed upstream source
 and its dependency closure.  The initial repeatable command sequence will be

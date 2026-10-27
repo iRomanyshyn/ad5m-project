@@ -1,6 +1,6 @@
 # AD5M-015 HelixScreen source and Buildroot integration
 
-Status: proposed
+Status: in progress
 
 ## Goal
 
@@ -16,19 +16,52 @@ The official upstream repository provides an AD5M-specific Buildroot target
 AD5M installer is an imperative script for other firmware variants.  It must
 not be run or imported into this project.
 
-An upstream snapshot was examined on 2026-10-27 at commit
-[`6eb61edc55244d62cc76a294203bbb9e012161ef`](https://github.com/prestonbrown/helixscreen/commit/6eb61edc55244d62cc76a294203bbb9e012161ef).
-It is GPL-3.0-or-later, carries a `PLATFORM_TARGET=ad5m-br` path, installs
-assets under `/opt/helixscreen`, and supports a separate writable
-`HELIX_CONFIG_DIR`.  Its `VERSION.txt` says `1.1.0-beta.13`; that differs from
-the repository README's stable-release statement, so the package version must
-be selected explicitly rather than following `main`.
+The candidate source is official stable tag
+[`v1.0.6`](https://github.com/prestonbrown/helixscreen/tree/v1.0.6), resolving
+to commit
+[`11230009fa09b4509d0d05f482feaeef2e94c854`](https://github.com/prestonbrown/helixscreen/commit/11230009fa09b4509d0d05f482feaeef2e94c854)
+from 2026-10-21.  It is GPL-3.0-or-later, carries a
+`PLATFORM_TARGET=ad5m-br` path, installs assets under `/opt/helixscreen`, and
+supports a separate writable `HELIX_CONFIG_DIR`.  The annotated tag has no
+cryptographic signature; `git fsck --no-dangling` passed on the inspected
+temporary Git object database.  This establishes source identity, not source
+approval or a substitute for dependency closure.
 
-The source has 14 Git submodules at this snapshot: cpp-terminal, glm,
-helix-xml, libhv, libjpeg-turbo, libnl, linenoise, Lua, lv_i18n,
-lv_markdown, LVGL, SDL2, spdlog, and a WPA-supplicant client.  Their Gitlink
-commits are immutable only as references; each source and license still needs
-closure review before a recursive-source package may be enabled.
+At this candidate commit `ad5m-br` selects `fbdev`, `evdev`, dynamic target
+libraries, and no SDL, GLES, or screensaver.  It does *not* set
+`ENABLE_MOCKS=no`; the external package must do that explicitly and must pass
+`HELIX_PACKAGING=1` (or an equivalent reviewed setting) to omit the
+remote-control server.  No user-visible service is accepted until those build
+properties can be inspected in its staged binary.
+
+### Direct source inventory
+
+The candidate has 15 direct Git submodules.  The table records Gitlink
+identities and the upstream's own declared licenses; none is accepted yet.
+Recursive submodules and generated/downloaded build inputs remain to be
+discovered and audited.
+
+| Path | Gitlink commit | Declared license | Review state |
+| --- | --- | --- | --- |
+| `lib/cpp-terminal` | `48ae2f284084850901c45b6c10a9d68949c1b272` | MIT | pending |
+| `lib/ftxui` | `b1527cb6966679da256409e577a0d44ae322b2e3` | MIT | pending |
+| `lib/glm` | `a583c59e1616a628b18195869767ea4d6faca5f4` | Happy Bunny or MIT | pending |
+| `lib/helix-xml` | `9c8f87a231bc0e9914c2a3a61de0fc254d2f172d` | MIT | pending |
+| `lib/libhv` | `71770e04becaa149e0ef8ffc4d3900c5466ddddb` | BSD-3-Clause | pending |
+| `lib/libjpeg-turbo` | `c85e6b905bf237038faa936dab160ebfc5da0344` | not stated in upstream `COPYRIGHT` | pending |
+| `lib/libnl` | `bdf83151326e365f137fe0e36dc9b1b7aeb1cf33` | LGPL-2.1 | pending |
+| `lib/linenoise` | `452e3793858a15cc006bb3aa3ea06378eb98c5b5` | BSD-2-Clause | pending |
+| `lib/lv_i18n` | `f6ac92ee2c31b57032fc6addc9aa15de2fee4568` | MIT | pending |
+| `lib/lv_markdown` | `77ec2c0c91614a50575a44c39d8db52c057ae681` | MIT | pending |
+| `lib/lvgl` | `85aa60d18b3d5e5588d7b247abf90198f07c8a63` | MIT | pending |
+| `lib/openvdb` | `604ed3828033b84de74f2bc35b01bc655195cb8f` | Apache-2.0 | pending |
+| `lib/sdl2` | `5d249570393f7a37e037abf22cd6012a4cc56a71` | zlib | pending |
+| `lib/spdlog` | `14ab43ec0b9df6cf793c75785ec5f70b65f2f965` | MIT | pending |
+| `lib/wpa_supplicant` | `b5e326d24298ac52fba3c4e5ba5ae79780c78dc9` | BSD-3-Clause | pending |
+
+The upstream `COPYRIGHT` also declares bundled components, including minilzo
+(GPL-2.0-or-later), quirc (ISC), and libraries nested in submodules.  This is
+why checking only the root GPL notice is insufficient.
 
 ## Repositories affected
 
@@ -37,9 +70,9 @@ closure review before a recursive-source package may be enabled.
 
 ## Requirements
 
-- Pin an official upstream release/tag or immutable commit and record the
-  source identity, archive/Git integrity evidence, license, and release
-  selection rationale.
+- Confirm or reject `v1.0.6` after reviewing its source graph, then pin the
+  selected official release/tag and record the source identity, archive/Git
+  integrity evidence, license, and release-selection rationale.
 - Review every fetched submodule and external dependency for source identity,
   license, Buildroot ownership, and whether it can be replaced by an existing
   Buildroot package.  Do not enable recursive Git checkout before that review.
@@ -75,8 +108,9 @@ closure review before a recursive-source package may be enabled.
 
 ## Proposed implementation
 
-1. Resolve the selected official source and complete source/dependency closure
-   using AD5M-008's integrity standard.
+1. Complete source/dependency closure for the `v1.0.6` candidate using
+   AD5M-008's integrity standard; select another fixed source only with a
+   recorded reason.
 2. Add a project-specific Buildroot package that invokes only the upstream
    `ad5m-br` build and staging interfaces, with an explicit, reviewed set of
    target library dependencies.
@@ -116,8 +150,9 @@ Not run.
 
 ## Remaining work
 
-- Select a stable, reviewable official upstream version.
-- Audit the complete source/dependency graph and target libraries.
+- Audit the complete source/dependency graph and target libraries for the
+  `v1.0.6` candidate, including recursive submodules and build-time downloads.
+- Confirm or reject the candidate after that audit.
 - Measure the packaged image's disk/RAM impact and boot behavior.
 - Determine exact framebuffer, touch device, calibration, and backlight values
   from a physical AD5M before setting hardware-specific environment values.
