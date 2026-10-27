@@ -189,6 +189,7 @@ Areas currently planned or under investigation include:
 - MCU shutdown/power timer
 - MCU timeout/resource problems
 - persistent user configuration
+- project-owned display-backlight control
 - safer updates and rollback
 - G-code upload integrity
 - Buildroot maintenance
