@@ -144,6 +144,28 @@ to invoke only explicit reviewed runtime executables, and must make feature
 selection independent of which libraries happen to exist in the build host or
 SDK.
 
+### Buildroot ownership audit (2026-10-27)
+
+The pinned canonical Buildroot tree already packages and stages `libnl`,
+`fmt`, `spdlog`, OpenSSL, zlib and JPEG.  Its `spdlog` package depends on its
+external-`fmt` package, so it is a coherent SDK dependency pair rather than a
+reason to use HelixScreen's host-path probes.  The existing AD5M SDK
+configuration already selects OpenSSL, zlib and turbo JPEG; it does not select
+`libnl`, `fmt`, or `spdlog`.
+
+Buildroot also has a normal upstream `wpa_supplicant` package, but the current
+AD5M configuration uses IWD instead.  HelixScreen's direct `hostap` Gitlink is
+therefore not an acceptable automatic dependency: the first package must not
+introduce a second Wi-Fi-management stack merely to satisfy an optional UI
+feature.  First establish whether that feature can be compiled out or
+integrated through the project's selected network manager; otherwise defer it.
+
+The provisional ownership direction is: prefer Buildroot for `fmt`, `spdlog`,
+`libnl`, OpenSSL, zlib and JPEG where the audited target graph needs them;
+retain a pinned audited upstream source only where there is no suitable
+Buildroot package (for example LVGL, libhv, helix-xml and lv-markdown).  This
+is a dependency-selection candidate, not an enabled package configuration.
+
 ## Repositories affected
 
 - ad5m_enhanced_mod
@@ -157,6 +179,9 @@ SDK.
 - Review every fetched submodule and external dependency for source identity,
   license, Buildroot ownership, and whether it can be replaced by an existing
   Buildroot package.  Do not enable recursive Git checkout before that review.
+- Do not add a second Wi-Fi-management stack; any HelixScreen network-control
+  path must be explicitly compiled out or integrated with the selected IWD
+  design after a separate review.
 - Keep the package in `ad5m_enhanced_mod` unless a dependency is demonstrably
   generic Buildroot functionality.
 - Build the upstream `ad5m-br` target through the canonical Buildroot SDK;
@@ -242,6 +267,8 @@ Not run.
   `v1.0.6` candidate, including recursive submodules and build-time downloads.
 - Produce and review the minimal AD5M runtime-asset manifest before accepting
   the upstream staging target.
+- Decide and validate the Buildroot-versus-pinned-source owner for every
+  runtime dependency, including an explicit no-duplicate-Wi-Fi decision.
 - Confirm or reject the candidate after that audit.
 - Measure the packaged image's disk/RAM impact and boot behavior.
 - Determine exact framebuffer, touch device, calibration, and backlight values
