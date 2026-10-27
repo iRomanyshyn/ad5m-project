@@ -37,6 +37,14 @@ static source audit at `v1.0.6`
   printer and log context, so they are not acceptable merely because they are
   user-visible upstream features.
 
+The candidate has one relevant build-time gate only: remote control. A static
+search of its Makefile, `mk/` files, `include/` and `src/` found no equivalent
+compile-time local-only switch for UpdateChecker, telemetry, crash reporting,
+or debug-bundle upload. `HELIX_DISABLE_AUTO_UPDATES` is a runtime environment
+policy for the updater alone. Therefore the first AD5M local-only variant
+needs a small project adaptation unless a later pinned upstream revision adds
+and documents suitable feature gates.
+
 This is an upstream-source observation, not a claim that any request has
 occurred on an AD5M. No HelixScreen code, installer, updater or printer was
 run during the audit.
@@ -134,8 +142,8 @@ Not run.
 
 ## Remaining work
 
-- Decide whether a suitable upstream compile-time local-only switch exists;
-  otherwise design the smallest reviewable project adaptation.
+- Design the smallest reviewable project adaptation; the pinned candidate has
+  no suitable upstream compile-time local-only switch beyond remote control.
 - Inventory all staged executable and non-executable runtime files before
   choosing the endpoint/credential scan.
 - Define a no-egress test harness that still permits an explicit local
