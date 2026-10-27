@@ -122,6 +122,22 @@ target image build: Buildroot may compile its small host-side Kconfig helper,
 but it does not build target packages, download package sources, execute
 target code, or establish any printer behavior.
 
+### 2026-10-27 portable host lint baseline
+
+`make lint` runs the tracked `tests/lint-host.sh` without a third-party host
+formatter dependency.  It compiles every active Python source under the
+integration build inputs with `python3 -m py_compile`, setting
+`PYTHONPYCACHEPREFIX` to a temporary directory so no `__pycache__` is written
+to the repository.  It also enforces no trailing whitespace and a final
+newline in project-owned test shell/Python sources.  `make validate` now runs
+this lint baseline before the existing static integration checks.
+
+This is deliberately a conservative starting gate.  A diagnostic full Ruff
+scan of the inherited runtime modules reports 253 existing findings, many in
+the safety-adjacent `timelapse.py`; neither auto-formatting nor broad
+behaviour-changing fixes are appropriate in a validation-foundation change.
+That remediation is tracked separately as AD5M-021.
+
 ## Verification
 
 - `bash -n ad5m_enhanced_mod/tests/validate-static.sh`
@@ -137,6 +153,16 @@ target code, or establish any printer behavior.
   Buildroot `77fb3a9ec7cd1e27910a441e0d75df0cbe51c2de`; initialized and removed
   only a unique temporary Buildroot output directory, and verified the
   generated lite configuration's overlays, Moonraker, and ustreamer.
+- `make -C ad5m_enhanced_mod lint` — passed: compiled four active Python
+  files with disposable bytecode and checked whitespace hygiene in three
+  project-owned test sources.
+- `make -C ad5m_enhanced_mod validate` — passed with both the lint and static
+  integration layers.
+- `python3 -m compileall` with a temporary `PYTHONPYCACHEPREFIX` — passed for
+  all four active integration Python files.
+- `ruff check --select E9,F63,F7,F82` — passed for those same files as a
+  diagnostic sanity check; full Ruff findings are intentionally deferred to
+  AD5M-021 rather than auto-fixed.
 
 These are software-only checks.  The static runner did not configure
 Buildroot; the separate configuration runner did configure it in temporary
@@ -149,7 +175,5 @@ Not applicable to the initial software-only foundation.
 
 ## Remaining work
 
-1. Add lint/format checks appropriate to newly introduced shell and Python
-   files, without making unavailable host tooling a target-image dependency.
-2. Define Golden G-code fixtures only for a reviewed, non-hardware-emulating
+1. Define Golden G-code fixtures only for a reviewed, non-hardware-emulating
    macro behavior with a clear expected output.
