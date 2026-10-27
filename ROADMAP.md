@@ -23,6 +23,8 @@ legacy submodule dependency.
 - resolve the reviewed Klipper `python-msgspec` dependency closure and pin
   mutable/unhashed release sources before retrying the package build; see
   `tasks/AD5M-008-package-source-closure-and-integrity.md`
+- choose a legally reviewable FFmpeg distribution profile before publishing an
+  image; see `tasks/AD5M-009-ffmpeg-distribution-profile.md`
 - record a compatibility matrix for both printer variants, board/MCU revisions,
   stock-host versions, and validated cross-repository commit pairs
 - define a release manifest with component revisions and hashes; add SBOM,
