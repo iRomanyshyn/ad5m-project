@@ -51,6 +51,40 @@ This is an upstream-source observation, not a claim that any request has
 occurred on an AD5M. No HelixScreen code, installer, updater or printer was
 run during the audit.
 
+### Candidate compile-gate confirmation (2026-10-27)
+
+A fresh temporary read-only clone of the official annotated `v1.0.6` tag was
+resolved by the official remote to
+`11230009fa09b4509d0d05f482feaeef2e94c854`. Static inspection of *that exact
+root source* confirms that `HELIX_PACKAGING=1` only changes the default for
+`ENABLE_REMOTE_CONTROL` and removes `src/remote/*.cpp`. Its Makefile has no
+`ENABLE_DIAGNOSTIC_UPLOADS`, local-only, telemetry, crash-upload or
+debug-bundle-upload compilation gate. A separately available local checkout
+with a different history is not evidence for this pinned candidate and was
+not used to select its behavior.
+
+At the pinned source, `CrashReporter::try_auto_send()` directly POSTs to the
+crash-worker URL, `DebugBundleCollector::upload_async()` directly POSTs a
+compressed bundle to the debug-bundle URL, and the related UI paths invoke
+those methods. `TelemetryManager::enqueue_crash_event_unconditional()`
+explicitly queues a crash event despite the telemetry setting after a
+crash-report/bundle send. Hiding a settings row or relying on the telemetry
+toggle would therefore not satisfy a local-only promise: the relevant code,
+endpoint strings and ingest path would remain in the artifact. This is static
+code evidence only; none of those methods was built, called or allowed to
+contact an endpoint.
+
+The smallest acceptable project adaptation must fail closed at build time. The
+local-only profile must remove or replace these external transport entry
+points with local-only stubs and omit their endpoint/ingest material from the
+staged artifact. The separately reviewed telemetry-contribution profile may
+add back only the narrowly enumerated telemetry transport behind project-owned
+consent; it may not revive crash, debug-bundle or update paths. Package checks
+must inspect the selected source list/link result and staged files for the
+prohibited hostnames and ingest credential, rather than testing UI visibility
+alone. A root-owned `HELIX_DISABLE_AUTO_UPDATES=1` remains defense in depth for
+the updater but cannot provide this compile-time boundary.
+
 ### Telemetry contribution scope to audit
 
 The option is useful only if the user can make an informed choice. Preliminary
