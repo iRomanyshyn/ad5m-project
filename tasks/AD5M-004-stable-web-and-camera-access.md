@@ -85,7 +85,8 @@ serve the selected static UI on TCP 80 and document a stable
 `http://<device-name>.local:8080/...`.  The mDNS name must be persistent and
 unique, not the shared build-time `AD5M` hostname.  A first-boot naming design
 and a real LAN-resolution test are still required before selecting this
-approach.
+approach.  AD5M-017 now scopes that dependency; there is currently no
+per-device name generator in the image.
 
 Moonraker's [webcam API](https://moonraker.readthedocs.io/en/latest/external_api/webcams/)
 supports complete URLs or paths relative to Moonraker's host, and stores

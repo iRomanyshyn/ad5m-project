@@ -74,6 +74,9 @@ legacy submodule dependency.
 - keep camera configuration stable when the printer address changes; prefer a
   reviewed stable name or same-origin/proxy design over a raw IP address; see
   `tasks/AD5M-004-stable-web-and-camera-access.md`
+- proposed: establish a per-printer persistent mDNS identity before documenting
+  stable UI, camera or slicer addresses; see
+  `tasks/AD5M-017-persistent-device-name-and-mdns.md`
 - proposed: evaluate an ergonomic HelixScreen layout that separates
   easy-to-mistap controls on the resistive display; review the task before
   implementation; see
