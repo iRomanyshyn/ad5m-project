@@ -80,6 +80,38 @@ no-network-after-fetch build an explicit verification requirement. Any
 upstream update that changes the root commit or a Gitlink must repeat this
 closure audit before it is eligible for packaging.
 
+### Build-time network boundary audit (2026-10-27)
+
+Static inspection separates upstream developer convenience from a package
+build. The `install DESTDIR=...` target only stages already-built binaries and
+tracked runtime data; it does not call a downloader. The candidate also tracks
+the pre-generated MDI font C sources, MDI TTF, Latin font inputs, CJK runtime
+font binaries, and MDI metadata cache needed by the inspected build graph.
+
+The normal build is nevertheless not hermetic as written. Every generated MDI
+font source depends on a root `.fonts.stamp`. That stamp is untracked; when it
+is absent, its recipe checks the ambient host `PATH` and, if `lv_font_conv` is
+present, runs `scripts/regen_mdi_fonts.sh`. That script currently uses a local
+tracked MDI TTF and does not itself download, but letting a host-installed tool
+rewrite generated sources makes the output host-dependent. Its absence merely
+changes the recipe into a `touch`, which is not an acceptable security control.
+
+Other developer targets are explicitly out of the package path: `install-deps`
+can initialise submodules and run `npm install`; `update-mdi-cache` curls a
+moving `master` branch; and `regen-text-fonts` downloads CJK inputs from a
+moving `main` branch when they are absent. The CJK regeneration stamp is not
+part of the ordinary target dependency discovered here, but that does not make
+the target safe to call. No project recipe may invoke any of those targets,
+the upstream Docker helpers, or an asset regeneration script.
+
+Before packaging, add a small reviewed Buildroot-only adaptation which makes
+the pre-generated tracked fonts authoritative and disables the `.fonts.stamp`
+generator unconditionally, rather than relying on host-tool discovery. Record
+the selected generated-asset digests and demonstrate a build with outbound
+network denied after Buildroot has fetched the pinned source archive. This
+audit is static only: neither `make`, an asset generator, Docker nor any
+upstream installer has been executed.
+
 ### Production build-boundary findings (2026-10-27)
 
 This is a source-level inspection of the candidate only; it is not a target
@@ -99,6 +131,11 @@ build or an approval of any dependency.
   executables (`helix-screen`, splash and watchdog) and then use the upstream
   `install DESTDIR=...` staging target.  It must never invoke the installer,
   deploy or update targets.
+- The package must not allow the normal target to auto-regenerate fonts based
+  on a host `lv_font_conv` discovery. It needs a small reviewed adaptation that
+  treats the pinned generated font files as inputs and disables the untracked
+  `.fonts.stamp` recipe. Asset-regeneration, `npm`, Docker and updater targets
+  remain developer-only and out of the Buildroot package path.
 - With those production flags, desktop SDL, ALSA and libusb code paths are
   compiled out.  The app still needs LVGL/ThorVG, helix-xml, lv-markdown/md4c,
   quirc, GLM, fonts/translations, libhv, WPA client, libnl, spdlog/fmt, zlib,
@@ -273,9 +310,11 @@ Upstream source inspection and Makefile variable evaluation only. The
 inspection evaluated the `ad5m-br` linker flags with a supplied cross-prefix;
 it did not compile, link or execute HelixScreen. A metadata-only Git closure
 audit confirmed the fixed root commit and all 15 direct Gitlink commits, with
-no nested Gitlinks at those revisions. No package has been created, no source
-submodule has been accepted, and no HelixScreen binary, installer, updater, or
-deployment script has been run.
+no nested Gitlinks at those revisions. Build files and the relevant generator
+scripts were read statically to identify the font-generation and downloader
+paths; they were not invoked. No package has been created, no source submodule
+has been accepted, and no HelixScreen binary, installer, updater, or deployment
+script has been run.
 
 ## Hardware verification
 
@@ -286,6 +325,9 @@ Not run.
 - Audit vendored code, generated inputs, build-time downloads and target
   libraries for the `v1.0.6` candidate; the fixed Git-submodule closure is
   recorded above and contains no nested Git source.
+- Design and review the no-regeneration Buildroot adaptation, record the
+  selected generated-asset digests, and demonstrate no outbound access after
+  the pinned source archive has been fetched.
 - Produce and review the minimal AD5M runtime-asset manifest before accepting
   the upstream staging target.
 - Decide and validate the Buildroot-versus-pinned-source owner for every
