@@ -35,6 +35,36 @@ therefore rejects in-application self-update before this task is completed,
 and AD5M-018 requires the upstream update checker/self-updater to remain out
 of the local-only variant.
 
+### Current installer baseline audit (2026-10-27)
+
+The current USB installer is an initial-install/reinstall mechanism, not a
+candidate transactional updater. Static inspection of
+`device_files/install/flashforge_init.sh` shows that it removes the active
+host init entry and `/data/.klipper_mod/chroot` *before* checking free space or
+unpacking the new `chroot.tar.xz`. It prints MD5 digests for logging but has no
+embedded expected digest, signature verification, alternate release slot,
+candidate health check or rollback selection. A space, archive or setup
+failure after that deletion can therefore leave no prior chroot to boot.
+
+Its in-chroot setup also deliberately has semantics that an application update
+must not inherit. `install_steps.sh` copies an arbitrary user-provided USB
+overlay into `/` and then invokes `S54mcu_update`. That service calls
+`mcu_update.sh`, which flashes both printer MCUs whenever the persisted
+Klipper-version marker differs. The script's version marker is retained in the
+static database, but it is not an independently verified MCU-artifact identity.
+This flow is appropriate only to be audited separately as the existing
+installer; it cannot become a background or user-confirmed project updater.
+
+There is useful recovery-related context, but not a release rollback system:
+host `S00klipper_mod` can honor markers to boot stock once or remove the mod,
+and restores stock MCU firmware before those actions. It binds `/data` into
+the chroot. `install_steps.sh` keeps selected state under
+`/mnt/data/.klipper_mod/static` (network identity, SSH keys, Moonraker
+database and G-code), while the build post-processing stages fresh printer
+configuration into each root filesystem. AD5M-019 must inventory and preserve
+this boundary deliberately rather than assuming it is a complete migration
+scheme.
+
 ## Repositories affected
 
 - ad5m-project
@@ -57,6 +87,10 @@ of the local-only variant.
   printing, pause/recovery, firmware flashing, calibration or an uncertain
   printer state. An update must never override a print-safety state merely to
   meet a schedule.
+- Do not reuse the current destructive USB installer, its arbitrary overlay
+  copy, or its version-marker-driven automatic MCU flashing as an update
+  primitive. Project updates must treat MCU firmware as a separate,
+  explicitly reviewed safety-critical operation.
 - Preserve documented per-printer user state, including network identity,
   Moonraker database/authentication, G-code, HelixScreen layout/consent and
   other explicitly selected configuration. Migrations must be versioned,
@@ -114,6 +148,9 @@ of the local-only variant.
   authentication database or telemetry consent is silently reset.
 - No production path lets HelixScreen or another bundled application fetch and
   apply its own upstream release.
+- No project-update path invokes `S54mcu_update`, accepts an arbitrary USB
+  root overlay, or deletes the active chroot before the candidate is verified
+  and recoverable.
 - Automated tests cover integrity, state transitions, fault injection and
   rollback separately from physical printer evidence.
 
