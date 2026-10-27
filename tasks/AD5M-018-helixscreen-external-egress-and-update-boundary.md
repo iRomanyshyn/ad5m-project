@@ -103,6 +103,44 @@ G-code, camera images, printer configuration, debug bundles and automatic
 crash upload. A contributor who needs to share those diagnostics should use a
 separate, reviewed local-export/support flow.
 
+### v1.0.6 telemetry field inventory and minimization decision (2026-10-27)
+
+A static read of `TelemetryManager` at the pinned `v1.0.6` root commit shows
+that its existing opt-in is materially broader than the proposed AD5M
+contribution. The following is an inventory of code paths and fields, not an
+assertion that an AD5M has emitted them:
+
+| Category | Observed upstream event content |
+| --- | --- |
+| Correlation | persistent random UUID plus salt (sent as a deterministic hashed device ID), UTC timestamps, boot ID, schema/app version and platform |
+| Host and printer profile | CPU model, architecture, OS, RAM, core count, display resolution/backend/input/backlight traits, detected model, MCU names/count, Klipper/Moonraker versions, build volume, heater/extruder/MMU/capability data, and lists of printer objects, macro, fan, stepper, LED and sensor names |
+| UI and settings | theme, locale, display timing/brightness, sound/update/animation/time-format choices, home-widget IDs, panel/overlay use, performance by named panel, and old/new values for selected setting changes |
+| Print context | outcome, duration, phases, filament type and millimetres, nozzle/bed temperatures, slicer, tool/AMS use, thumbnail flag and bucketed file size/duration |
+| Reliability and diagnostics | process/system memory values, frame timing, Moonraker connectivity, update-result metadata, error category/code/context, crash register/memory-map fields and asynchronous-lifetime counters |
+
+The upstream implementation creates `telemetry_device.json` with its random
+identity during initialization, before it loads the user's enabled setting,
+and keeps frame samples warm while disabled. It also persists queued events in
+`telemetry_queue.json`. Its generic `error.context` is not a safe data
+boundary: inspected callers pass caught exception text, LVGL messages, a
+G-code-viewer resource path and a hexadecimal backtrace. The normal print
+telemetry does not itself serialize G-code contents, images or a camera frame,
+but those findings mean the project must not promise that the unmodified
+upstream manager excludes all sensitive diagnostic context. Debug bundles are
+separate and even broader; they remain prohibited.
+
+Consequently, an AD5M telemetry contribution cannot expose the upstream
+`telemetry_enabled` toggle or reuse its event queue/identity lifecycle. It
+needs a project-owned, strictly allowlisted event schema and sender. The first
+candidate schema is limited to release/platform compatibility, explicitly
+coarsened UI performance/reliability counters and fixed error *codes*; it
+excludes persistent identity before consent, all raw/free-form error context,
+hardware/configuration names, setting old/new values, printer-object/macro
+inventories, print file/filament/temperature details, update diagnostics,
+memory maps and backtraces. Exact fields, retention and send cadence still
+need a separate review before implementation. On decline or revocation, the
+project sender must have no identifier, queue or DNS-capable transport to run.
+
 ## Repositories affected
 
 - ad5m-project
@@ -135,6 +173,12 @@ separate, reviewed local-export/support flow.
   opt-in state is present. The telemetry-enabled profile may retain the
   telemetry endpoint and its write-only ingest credential; the local-only
   profile must not. Neither profile may retain unrelated external transport.
+- Do not reuse the pinned upstream telemetry manager's identity, queue or
+  event schema for the AD5M contribution. It creates local identity before
+  consent and can emit broad profiles and free-form diagnostic context. Use a
+  project-owned, strict allowlist with no persistent identifier or queued
+  report before consent; consent/revocation must create/remove the complete
+  local contribution state atomically.
 - Disable the upstream update checker and self-updater as a project-owned,
   upgrade-safe policy. `HELIX_DISABLE_AUTO_UPDATES=1` in a root-owned service
   environment may be a short-term defense-in-depth measure, but it is not by
