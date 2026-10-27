@@ -65,6 +65,17 @@ configuration into each root filesystem. AD5M-019 must inventory and preserve
 this boundary deliberately rather than assuming it is a complete migration
 scheme.
 
+A local developer `lite` bundle was inspected for scale only, not accepted as
+a release: its embedded `chroot.tar.xz` was 56,606,892 bytes and its decoded
+tar stream was 250,572,800 bytes. Tar-stream size is not a measurement of
+target filesystem allocation, and a dirty local artifact is not release
+evidence. It is nevertheless enough to reject an unmeasured dual-slot
+assumption: the current installer's 512 MiB free-space threshold is checked
+only after deleting the old chroot, while keeping an old root, a candidate root
+and a staged compressed artifact can require substantially more capacity.
+Measure the selected variant on the actual target layout before choosing an
+atomic-switch strategy.
+
 ## Repositories affected
 
 - ad5m-project
@@ -81,7 +92,8 @@ scheme.
   artifact as sufficient authority by itself.
 - Keep the current release bootable until the candidate has been completely
   staged and verified. Define the exact storage layout and atomic switch
-  primitive from the actual AD5M install layout; do not assume A/B slots exist.
+  primitive from the actual AD5M install layout; do not assume A/B slots exist
+  or that the current 512 MiB installer threshold can fund one.
 - Apply only after an explicit local user confirmation and only when the
   printer is genuinely idle. Block application during print preparation,
   printing, pause/recovery, firmware flashing, calibration or an uncertain
