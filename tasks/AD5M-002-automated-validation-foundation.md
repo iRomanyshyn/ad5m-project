@@ -1,6 +1,6 @@
 # AD5M-002 Automated validation foundation
 
-Status: in progress
+Status: complete
 
 ## Goal
 
@@ -163,6 +163,11 @@ That remediation is tracked separately as AD5M-021.
 - `ruff check --select E9,F63,F7,F82` — passed for those same files as a
   diagnostic sanity check; full Ruff findings are intentionally deferred to
   AD5M-021 rather than auto-fixed.
+- `make -C ad5m_enhanced_mod macro-golden
+  KLIPPER_SOURCE_DIR=<clean official Klipper checkout>` — passed through the
+  AD5M-022 harness.  It rendered nine `_LOAD_MATERIAL_ACTION` prompt commands
+  with upstream Klipper's template implementation, rejected the tracked `G1`
+  negative fixture, and failed clearly when a temporary golden label changed.
 
 These are software-only checks.  The static runner did not configure
 Buildroot; the separate configuration runner did configure it in temporary
@@ -175,7 +180,9 @@ Not applicable to the initial software-only foundation.
 
 ## Remaining work
 
-1. Define Golden G-code fixtures only for a reviewed, non-hardware-emulating
-   macro behavior with a clear expected output.  AD5M-022 owns the required
-   isolated Klipper harness; do not replace it with a project-written Jinja or
-   G-code interpreter.
+The initial foundation is complete.  Future expansion is deliberately scoped:
+
+- AD5M-021 owns reviewable remediation of inherited runtime-Python lint debt.
+- Further macro fixtures must extend the AD5M-022 allow-list model and remain
+  non-physical; do not replace the official Klipper renderer with a
+  project-written Jinja or G-code interpreter.
