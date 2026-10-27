@@ -275,8 +275,8 @@ is a dependency-selection candidate, not an enabled package configuration.
 - Changing Klipper safety configuration, MCU firmware, heaters, motion,
   probing, or power control.
 - Treating a host mock screenshot as target or hardware validation.
-- Adding in-application self-update before a transactional project update
-  design exists.
+- Adding in-application self-update before AD5M-019's transactional project
+  update and rollback design exists.
 
 ## Proposed implementation
 

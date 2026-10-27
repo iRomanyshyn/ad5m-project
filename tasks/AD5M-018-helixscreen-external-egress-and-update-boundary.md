@@ -106,7 +106,9 @@ separate, reviewed local-export/support flow.
   environment may be a short-term defense-in-depth measure, but it is not by
   itself sufficient evidence that future upstream code cannot egress. The
   package needs a reviewed compile/staging adaptation or a testable upstream
-  build switch that removes the automatic check and update UI.
+  build switch that removes the automatic check and update UI. Any future
+  project-managed update path is AD5M-019; it must not inherit upstream
+  self-update authority.
 - Do not ship upstream crash-report or debug-bundle upload actions in the
   local-only variant. Preserve local crash evidence and offer an export path
   only after reviewing data redaction, ownership and user interaction; never
