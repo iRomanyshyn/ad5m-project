@@ -52,7 +52,40 @@ canonical Buildroot integration is established.
 
 ## Implementation notes
 
-No implementation has started.
+### 2026-10-27 emulator and test-harness audit
+
+The canonical Buildroot checkout provides generic QEMU defconfigs, including
+ARM `vexpress` and ARM64 `virt` machines, but none for the AD5M's Allwinner
+T113-S3.  Its ARM vexpress example is a different board with a virtual
+framebuffer and 256 MiB of RAM.  It can be useful later for generic userspace
+and SysV-service smoke tests, but it cannot validate the AD5M boot chain,
+kernel/device tree, framebuffer/touch wiring, camera, network hardware, MCU,
+load-cell, heaters, or motion.  A QEMU result must therefore be labelled
+`generic Buildroot userspace`, never `AD5M emulation`.
+
+The tracked project and Klipper-Mod sources currently contain no project-owned
+test runner, fixture directory, or CI workflow.  Local `build_output/` is not
+a test harness and must stay ignored.  The first test foundation should be
+small and source-controlled rather than adding an emulator image prematurely.
+
+The proposed layered sequence is:
+
+| Layer | First candidate | Establishes | Explicitly does not establish |
+| --- | --- | --- | --- |
+| Static | shell syntax, configuration policy and staged-file checks | package/config regressions | running services or hardware behaviour |
+| Protocol fixture | authored Moonraker/Klipper JSON-RPC normal, disconnected and error states | UI/client request and failure handling | a live Moonraker, MCU or printer configuration |
+| Host UI mock | HelixScreen `--test` screenshot after AD5M-015 source approval | visual layout and navigation | target binary, fbdev, touch, resource use or safety |
+| Generic QEMU | a minimal separate ARM QEMU rootfs/service smoke test | generic BusyBox/SysV startup assumptions | any AD5M peripheral or boot claim |
+| Hardware-in-the-loop | an explicitly prepared AD5M | final motion/thermal/touch/MCU evidence | unattended regression coverage |
+
+The first fixture must be deliberately authored, versioned JSON rather than a
+raw capture containing a printer name, network address, G-code, credentials,
+or user data.  Start with the dashboard/control workflow: ready/idle,
+printing, disconnected, and Moonraker error responses.  It must assert that a
+mocked action is only requested, never relayed to a serial device or a real
+Moonraker endpoint.  Adding that fixture is deferred until the consuming
+client/interface and its exact API contract are accepted; at present no
+project component can execute it.
 
 ## Verification
 
@@ -78,3 +111,7 @@ recorded with the chosen source revision and will use an isolated
 settings.  The resulting screenshot establishes visual layout only.  It does
 not validate resistive-touch accuracy, framebuffer startup, memory pressure,
 or Klipper/Moonraker integration.
+
+Generic QEMU work is a later, independent smoke-test layer.  It must use a
+separate generic QEMU configuration and must not reuse or boot the AD5M image.
+It is not a shortcut around physical validation.
