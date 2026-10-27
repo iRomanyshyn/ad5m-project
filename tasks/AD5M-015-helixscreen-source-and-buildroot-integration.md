@@ -106,6 +106,16 @@ build or an approval of any dependency.
   impact and shutdown behaviour.  M300 output likewise remains disabled until
   the printer configuration is explicitly reviewed; no UI package may add or
   modify a beeper macro.
+- The pinned Buildroot tree already supports the normal source-delivery
+  mechanism needed here: `SITE_METHOD=git` with `GIT_SUBMODULES=YES` checks
+  out the root commit, recursively resolves its Gitlinks, and produces the
+  package source archive.  A future recipe may use that mechanism with the
+  immutable root commit; it must not use a branch, an installer download, or
+  a custom fetcher.  Before enabling it, record each recursively fetched
+  commit, URL, license and license-file location, then retain the resulting
+  source-archive digest as build evidence.  This capability has been read
+  from the canonical Buildroot downloader only; it has not been run for
+  HelixScreen.
 
 ## Repositories affected
 
