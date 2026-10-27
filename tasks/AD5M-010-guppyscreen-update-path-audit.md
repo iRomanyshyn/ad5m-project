@@ -1,8 +1,15 @@
 # AD5M-010 GuppyScreen update-path audit
 
-Status: proposed
+Status: rejected
 
-## Goal
+## Decision
+
+Rejected on 2026-10-27. AD5M-012 retired GuppyScreen and ADR 0003 makes
+HelixScreen the only planned touchscreen UI. This audit is not to be resumed
+or used to make a GuppyScreen release possible. Its analysis remains as a
+historical record of why an unreviewed updater must not enter a firmware image.
+
+## Former goal
 
 Decide whether GuppyScreen's visible update control is disabled, replaced with
 the project's reviewed update flow, or supplied with a fully verified updater
@@ -28,7 +35,7 @@ must not be relied on as an implicit long-term security boundary.
 - ad5m-project
 - ad5m_enhanced_mod
 
-## Requirements
+## Historical audit requirements
 
 - Keep the upstream `update.sh`, installers, and release archives out of the
   firmware image unless a separate security review explicitly approves them.
@@ -49,7 +56,7 @@ must not be relied on as an implicit long-term security boundary.
 - Treating an upstream GitHub release as trusted without verification.
 - Physical-printer testing in the initial audit.
 
-## Proposed implementation
+## Historical proposed implementation
 
 First confirm the current packaged binary's behavior when no adjacent
 `update.sh` exists. Then prefer an upstream configuration or small, reviewed
@@ -59,8 +66,8 @@ rollback architecture is defined.
 
 ## Verification
 
-Not run.
+Not run; no longer applicable because the GuppyScreen variant is retired.
 
 ## Hardware verification
 
-Not run.
+Not run; no GuppyScreen image may be installed on a printer.

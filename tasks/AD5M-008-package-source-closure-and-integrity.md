@@ -147,9 +147,7 @@ motion, heater, display, camera, network, or print behavior was tested.
 
 ## Remaining work
 
-- AD5M-010 must decide and enforce the GuppyScreen update-button behavior
-  before enabling that variant for a release.
-- AD5M-011 must audit GuppyScreen's fetched submodule closure before enabling
-  that variant for a release.
+- AD5M-010 and AD5M-011 were rejected when AD5M-012 retired GuppyScreen; they
+  are retained only as historical security-audit records.
 - AD5M-009 remains required before claiming that an FFmpeg-containing image
   is redistributable.

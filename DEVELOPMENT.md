@@ -205,7 +205,7 @@ git config user.email
 ## Canonical Buildroot build contract
 
 The Klipper Mod Makefile provides targets such as `make help`, `make lite`,
-`make klipperscreen`, and `make guppyscreen`. Its generated output is under
+and `make klipperscreen`. Its generated output is under
 `ad5m_enhanced_mod/build_output/`, which is ignored and local-only.
 
 The Klipper Mod uses the sibling `../buildroot-flashforge-ad5m` checkout, not
@@ -229,10 +229,9 @@ packages) are:
 make -C ~/Projects/ad5m/ad5m_enhanced_mod sdk_prepare
 make -C ~/Projects/ad5m/ad5m_enhanced_mod lite_prepare
 make -C ~/Projects/ad5m/ad5m_enhanced_mod klipperscreen_prepare
-make -C ~/Projects/ad5m/ad5m_enhanced_mod guppyscreen_prepare
 ```
 
-The corresponding `sdk`, `lite`, `klipperscreen`, and `guppyscreen` targets
+The corresponding `sdk`, `lite`, and `klipperscreen` targets
 perform actual builds. Run them only after checking available disk space and
 when the task calls for a package build. If an existing local output directory
 was configured from another Buildroot source, the wrapper stops; use its

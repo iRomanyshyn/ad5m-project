@@ -1,8 +1,15 @@
 # AD5M-011 GuppyScreen submodule provenance
 
-Status: proposed
+Status: rejected
 
-## Goal
+## Decision
+
+Rejected on 2026-10-27. AD5M-012 retired GuppyScreen and ADR 0003 makes
+HelixScreen the only planned touchscreen UI. This audit must not be resumed to
+make a GuppyScreen release possible. Its description remains as a historical
+record of the source-closure risk that was avoided by removing the recipe.
+
+## Former goal
 
 Audit the complete source closure fetched by the GuppyScreen Buildroot recipe
 before the GuppyScreen variant is treated as release-ready.
@@ -17,7 +24,7 @@ their source through URLs recorded in `.gitmodules`. AD5M-008 audited the
 parent source and its direct packaged binary only; it did not independently
 audit each fetched submodule's provenance, license, revision, or build input.
 
-## Requirements
+## Historical audit requirements
 
 - Record every Gitlink path, commit ID, remote URL, license, and relevant
   transitive-submodule state for the exact parent commit.
@@ -37,8 +44,8 @@ audit each fetched submodule's provenance, license, revision, or build input.
 
 ## Verification
 
-Not run.
+Not run; no longer applicable because the GuppyScreen recipe is removed.
 
 ## Hardware verification
 
-Not run.
+Not run; no GuppyScreen image may be installed on a printer.

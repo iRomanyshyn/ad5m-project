@@ -94,6 +94,10 @@ Avoid maintaining local forks unless there is a strong technical reason.
 
 Keep HelixScreen upstream and unmodified whenever possible.
 
+HelixScreen is the project's only planned touchscreen UI. GuppyScreen is not a
+supported or releaseable variant and must not be reintroduced without a new
+explicit architectural decision; see `decisions/0003-screen-platform-policy.md`.
+
 Prefer solving integration issues using:
 
 - Klipper macros
