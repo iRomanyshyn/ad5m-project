@@ -1,6 +1,6 @@
 # AD5M-005 HelixScreen touch-layout ergonomics
 
-Status: proposed
+Status: in progress
 
 ## Goal
 
@@ -58,9 +58,43 @@ upstreamable HelixScreen change.
 
 ## Implementation notes
 
-No implementation has started. Upstream documentation indicates Home-dashboard
-widget editing is available; applicability to other panels remains to be
-verified.
+### 2026-10-27 upstream discovery
+
+The official upstream repository was examined at immutable commit
+[`6eb61edc55244d62cc76a294203bbb9e012161ef`](https://github.com/prestonbrown/helixscreen/commit/6eb61edc55244d62cc76a294203bbb9e012161ef).
+It is GPL-3.0-or-later and is a C++17/LVGL application, not a Python/GTK
+screen.  Its tracked `VERSION.txt` identifies that snapshot as
+`1.1.0-beta.13`, despite the repository README describing a stable 1.0
+release.  We must choose a reviewed release/tag or a specifically reviewed
+commit before packaging; the moving `main` branch is not a release source.
+
+Upstream has a Buildroot-oriented AD5M target,
+`PLATFORM_TARGET=ad5m-br`, that deliberately uses the framebuffer backend,
+the Buildroot cross-toolchain, dynamic target libraries, and no SDL.  It
+explicitly disables its mock backend.  The product image must therefore be a
+separate Buildroot package, while UI layout review must use a native host
+build with `--test`; no mock result represents an AD5M runtime image or its
+touch panel.
+
+The source supports `HELIX_CONFIG_DIR` as a writable configuration directory
+independent of its read-only assets.  The intended integration will keep
+program assets below `/opt/helixscreen` and put persistent user settings,
+including dashboard layout, below
+`/root/printer_data/config/helixscreen`.  This path already belongs to the
+project's persistent Klipper/Moonraker data area.  The future init service
+must set the directory itself, rather than accept it from a user-editable
+environment file.
+
+Upstream's Home dashboard supports an editable, multi-page grid and macro
+confirmation.  The next prototype will use that upstream configuration only:
+put high-consequence controls on a separate page or with an empty grid margin,
+require confirmation where the upstream control supports it, and retain an
+explicit record of controls that cannot be rearranged.
+
+The generic `lite` image still contains the static `S90welcome` framebuffer
+image.  It is not a KlipperScreen service and remains required for `lite`.
+The HelixScreen-specific init service must own the display after boot and its
+ordering/transition must be reviewed as part of the packaging task.
 
 ## Verification
 
@@ -72,5 +106,11 @@ Not run.
 
 ## Remaining work
 
-Identify the current HelixScreen version, its installation/integration path,
-and the specific controls that are problematic on the AD5M display.
+1. Complete AD5M-015's source and dependency closure before adding a package.
+2. Build the pinned source natively and use `--test` plus a screenshot for the
+   first dashboard prototype.
+3. Inventory the AD5M controls that are adjacent today; record their
+   consequence and the specific grid/confirmation treatment.
+4. Create the AD5M-specific package, service, and persistent-config handoff
+   only after the source review approves a fixed upstream version.
+5. Perform a separately recorded physical touch and boot-transition review.

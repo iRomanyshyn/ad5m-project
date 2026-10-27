@@ -50,6 +50,9 @@ path.
   configuration override warnings, but reported no error.
 - A case-insensitive source scan found no KlipperScreen or Klipper Screen
   references in `ad5m_enhanced_mod` outside ignored generated output.
+- Follow-up cleanup removed the unreferenced historical
+  `printer_configs/KlipperScreen.conf`; it was not installed by the remaining
+  `lite` variant and could otherwise suggest a supported configuration.
 
 ## Hardware verification
 

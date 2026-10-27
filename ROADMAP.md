@@ -64,6 +64,9 @@ legacy submodule dependency.
 
 - HelixScreen integration; it is the only planned touchscreen UI (see
   `decisions/0003-screen-platform-policy.md`)
+- proposed: establish a pinned, first-class Buildroot package and persistent
+  configuration boundary before enabling HelixScreen in an image; see
+  `tasks/AD5M-015-helixscreen-source-and-buildroot-integration.md`
 - proposed: provide a documented primary web UI without requiring users to enter
   non-standard port `4001`; review the task before implementation; see
   `tasks/AD5M-004-stable-web-and-camera-access.md`

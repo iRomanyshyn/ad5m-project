@@ -1,6 +1,6 @@
 # AD5M-003 Printer simulation and mock strategy
 
-Status: proposed
+Status: in progress
 
 ## Goal
 
@@ -64,4 +64,17 @@ Not run.
 
 ## Remaining work
 
-Select the first workflow after the automated validation foundation exists.
+The first selected workflow is HelixScreen dashboard-layout review (AD5M-005).
+The official HelixScreen source, inspected at commit
+`6eb61edc55244d62cc76a294203bbb9e012161ef`, has a native `--test` mode
+which uses a mock printer and can produce a screenshot.  Its AD5M Buildroot
+target disables mocks, so this is strictly a host-side UI workflow, not a
+target-image or touch-driver test.
+
+Before running it, AD5M-015 must select and audit the fixed upstream source
+and its dependency closure.  The initial repeatable command sequence will be
+recorded with the chosen source revision and will use an isolated
+`HELIX_CONFIG_DIR`; it must not inherit a Moonraker host or any real-printer
+settings.  The resulting screenshot establishes visual layout only.  It does
+not validate resistive-touch accuracy, framebuffer startup, memory pressure,
+or Klipper/Moonraker integration.
