@@ -76,6 +76,36 @@ and a staged compressed artifact can require substantially more capacity.
 Measure the selected variant on the actual target layout before choosing an
 atomic-switch strategy.
 
+### Current persistence inventory (2026-10-27)
+
+The current chroot setup moves only the following paths to
+`/mnt/data/.klipper_mod/static` on first installation and makes the chroot
+paths symbolic links back to them on later installations:
+
+| Current path | Current purpose | Update-design consequence |
+| --- | --- | --- |
+| `/etc/hostname`, `/var/lib/iwd`, `/etc/network/interfaces`, `/etc/wpa_supplicant.conf` | device name and network identity | Preserve deliberately; never overwrite or export Wi-Fi secrets in a release artifact or diagnostic log. |
+| `/etc/dropbear`, `/root/.ssh` | remote-access host and user keys | Treat as sensitive per-printer state. A candidate may use it only through the defined state boundary, and a release must not replace it with packaged keys. |
+| `/root/printer_data/database` | Moonraker database, including the MCU-version marker and potentially authorization state | Migration must preserve authorization while being compatible with both the candidate and rollback release; the existing Klipper-version marker is not sufficient release identity. |
+| `/root/printer_data/gcodes` | user G-code | Preserve without allowing an update manifest or migration to execute its contents. |
+
+`/root/printer_data/config` is *not* in that static list. Build post-processing
+creates it anew in every root filesystem from `printer_configs/`; the current
+installer therefore does not establish that arbitrary edited printer
+configuration survives a chroot replacement. Likewise, current scripts do
+not establish a persistent HelixScreen layout/consent location. AD5M-019 must
+define an explicit, minimal state schema for any configuration it promises to
+retain, including ownership, permissions, migration version and backup/restore
+rules. It must not make all of `/data` persistent by default.
+
+The host boot script bind-mounts the whole `/data` partition into the chroot,
+so a candidate release has access to this persistent state before it becomes
+known good. The update design must validate a candidate before granting it
+write access to migration state where possible, journal every migration, and
+require forward *and backward* database/state compatibility until the health
+check commits the switch. A rollback must not be forced to consume a state
+format that only the failed candidate understands.
+
 ## Repositories affected
 
 - ad5m-project
@@ -106,7 +136,10 @@ atomic-switch strategy.
 - Preserve documented per-printer user state, including network identity,
   Moonraker database/authentication, G-code, HelixScreen layout/consent and
   other explicitly selected configuration. Migrations must be versioned,
-  idempotent and reversible where feasible.
+  idempotent and reversible where feasible, with an explicit compatibility
+  contract for both the candidate and previous release until health-check
+  commit. Do not turn the whole `/data` partition into unmanaged persistent
+  state.
 - On first start after switching, perform a bounded health check of the
   essential services and record a machine-readable result. A failed health
   check, failed migration, missing runtime dependency or boot-loop must return
