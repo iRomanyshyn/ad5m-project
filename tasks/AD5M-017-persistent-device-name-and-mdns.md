@@ -70,6 +70,49 @@ hostname as a migration case.  An upgrade must preserve an already customized
 hostname and must not cause a service to keep advertising the old name after a
 rename.
 
+## Implementation notes
+
+### 2026-10-27 persistence and mDNS audit
+
+The current installer already has the right persistence primitive, but not the
+right initial value.  On its first run it moves `/etc/hostname` to
+`/mnt/data/.klipper_mod/static/etc/hostname` and replaces the original path
+with a symlink.  The chroot init script applies that file with `hostname -F`
+before starting the normal services.  Consequently, a hostname generated
+before this first `setup_static_data /etc/hostname` call will persist across
+ordinary re-installs; changing a build default alone will not repair a device
+that has already persisted `AD5M`.
+
+No separate mDNS daemon is needed for the candidate design.  The pinned
+Moonraker source's `[zeroconf]` component defaults `mdns_hostname` to the OS
+hostname, publishes a `_moonraker._tcp.local.` service with
+`<hostname>.local.` as its server name, and refreshes its advertised addresses
+when a listener bound to all interfaces receives a network-state change.  The
+current overlay does not override `mdns_hostname`.  This is source evidence
+only: a real LAN must still verify that the final name resolves on the clients
+we support, both before and after a DHCP address change.
+
+The concrete first-release candidate is an installation-time name of the form
+`ad5m-<16 lowercase hexadecimal characters>`, generated from 64 bits of
+cryptographically secure local randomness and written once to the existing
+static hostname file.  It is a valid short DNS label, readable enough to show
+and copy, avoids exposing a hardware serial or MAC address, and makes random
+collisions negligible at project scale.  Entropy availability and the exact
+small target-side generator must be checked in the built image before this is
+implemented; it must fail safely rather than silently falling back to a
+predictable suffix.
+
+Existing installations, including ones whose persisted value remains `AD5M`,
+must not be silently renamed.  A local owner-initiated rename needs one
+validated operation that atomically writes the static hostname, applies the
+runtime hostname, regenerates the narrow Moonraker browser-origin policy from
+AD5M-016, and restarts/re-registers the affected services.  Validate a single
+ASCII DNS label (lowercase letters, digits and interior hyphens; 1--63
+characters) and reject names such as `localhost`, dots, whitespace and shell
+metacharacters.  If any generated configuration fails validation, retain the
+previous hostname and origin policy rather than leaving one updated without
+the other.
+
 ## Acceptance criteria
 
 - Two fresh installations select different valid names without network access.
