@@ -98,6 +98,40 @@ image.  It is not a KlipperScreen service and remains required for `lite`.
 The HelixScreen-specific init service must own the display after boot and its
 ordering/transition must be reviewed as part of the packaging task.
 
+### 2026-10-27 configuration-boundary audit
+
+The dashboard layout is genuinely upstream-configurable.  In `v1.0.6`, the
+per-printer `panel_widgets/home` configuration stores up to eight pages and,
+for every dashboard widget, its enabled state, grid column/row and column/row
+span.  Entering Home edit mode disables the child controls while a user drags
+or resizes widgets, then persists the result.  Given the project-owned
+`HELIX_CONFIG_DIR` boundary, this makes whole-widget placement, empty grid
+space, and separate pages viable without a HelixScreen fork.
+
+There is also a concrete limitation.  The `control_buttons` widget places
+Pause/Resume and Stop next to each other in one fixed horizontal row.  Its
+internal layout has no corresponding dashboard setting, so moving or resizing
+the widget cannot spatially separate those two actions.  Stop opens an
+upstream confirmation dialog, which reduces the consequence of a mistap but
+does not make the touch targets farther apart.  The printing E-Stop is a
+separate floating top-right action with an upstream confirmation dialog; it
+does not participate in the editable grid either.
+
+The first AD5M mock prototype must therefore demonstrate two distinct cases:
+
+1. a configuration-only Home layout that moves whole widgets and keeps a
+   deliberate empty margin/page boundary around high-consequence controls;
+   and
+2. whether the adjacent Pause/Stop controls remain unacceptable on the actual
+   800x480 resistive panel after their confirmation flow is reviewed.
+
+If case 2 fails, record the measured touch problem and propose the smallest
+upstreamable change: a split Pause/Resume and Stop widget, or a supported
+widget option that selects a vertical/separated layout.  Do not patch a local
+copy merely to change pixel coordinates.  A separate input setting can disable
+Home edit mode or tune the global long-press delay, but that changes all
+long-press gestures and is not a substitute for safer action placement.
+
 ## Verification
 
 Not run.
@@ -113,6 +147,8 @@ Not run.
    first dashboard prototype.
 3. Inventory the AD5M controls that are adjacent today; record their
    consequence and the specific grid/confirmation treatment.
-4. Create the AD5M-specific package, service, and persistent-config handoff
+4. Use the source-level boundary above to assess the fixed Pause/Stop widget
+   and floating E-Stop; capture the decision in the mock screenshot review.
+5. Create the AD5M-specific package, service, and persistent-config handoff
    only after the source review approves a fixed upstream version.
-5. Perform a separately recorded physical touch and boot-transition review.
+6. Perform a separately recorded physical touch and boot-transition review.
