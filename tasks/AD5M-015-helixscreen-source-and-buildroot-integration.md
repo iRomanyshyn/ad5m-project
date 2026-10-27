@@ -63,6 +63,50 @@ The upstream `COPYRIGHT` also declares bundled components, including minilzo
 (GPL-2.0-or-later), quirc (ISC), and libraries nested in submodules.  This is
 why checking only the root GPL notice is insufficient.
 
+### Production build-boundary findings (2026-10-27)
+
+This is a source-level inspection of the candidate only; it is not a target
+build or an approval of any dependency.
+
+- `ad5m-br` is a useful upstream *platform setting*, not a complete Buildroot
+  recipe.  It selects `fbdev` and `evdev`, and turns off SDL, GLES and the
+  screensaver.  It leaves mocks enabled by the Makefile default and enables
+  remote control unless `HELIX_PACKAGING=1` or an equivalent explicit setting
+  is provided.  The package must set all of
+  `PLATFORM_TARGET=ad5m-br`, `CROSS_COMPILE=$(TARGET_CROSS)`,
+  `ENABLE_MOCKS=no`, `HELIX_PACKAGING=1`, and
+  `ENABLE_REMOTE_CONTROL=no`; none may depend on a host default.
+- The upstream `all` target also requests the optional Bluetooth plugin.  That
+  component brings a BlueZ/systemd/minilzo path and is irrelevant to the
+  initial AD5M UI.  The package must instead build only the reviewed runtime
+  executables (`helix-screen`, splash and watchdog) and then use the upstream
+  `install DESTDIR=...` staging target.  It must never invoke the installer,
+  deploy or update targets.
+- With those production flags, desktop SDL, ALSA and libusb code paths are
+  compiled out.  The app still needs LVGL/ThorVG, helix-xml, lv-markdown/md4c,
+  quirc, GLM, fonts/translations, libhv, WPA client, libnl, spdlog/fmt, zlib,
+  pthreads and optional OpenSSL.  `cpp-terminal`, FTXUI, OpenVDB, SDL2,
+  linenoise and the Bluetooth plugin are not part of that initial target
+  graph.  This is a preliminary graph: recursive submodules and generated
+  inputs still need their own identity and license review.
+- Current upstream cross-build logic builds libhv, WPA client and libnl from
+  source submodules, probes spdlog/fmt with host-oriented paths, and adds
+  `-L/usr/lib/$(TARGET_TRIPLE)`.  Buildroot's SDK provides neither that path
+  nor a `CROSS_COMPILE` variable by default.  A small, separately reviewed
+  Buildroot adaptation is therefore required before packaging: make the
+  recipe pass `$(TARGET_CROSS)`, use the staging sysroot rather than host
+  probes/paths, and decide each library's owner (a pinned audited submodule or
+  a reviewed Buildroot package).  Do not add an "as-is" recipe that can link
+  host artifacts accidentally.
+- `ad5m-br` also compiles the PWM sound backend with automatic export of
+  `/sys/class/pwm/pwmchip0/pwm6` when that channel is absent.  That writes to
+  hardware state during UI initialization.  The first project image must
+  compile sound/PWM support out (including the auto-export flag) until a
+  separate AD5M hardware review establishes the channel, ownership, resource
+  impact and shutdown behaviour.  M300 output likewise remains disabled until
+  the printer configuration is explicitly reviewed; no UI package may add or
+  modify a beeper macro.
+
 ## Repositories affected
 
 - ad5m_enhanced_mod
@@ -80,6 +124,8 @@ why checking only the root GPL notice is insufficient.
   generic Buildroot functionality.
 - Build the upstream `ad5m-br` target through the canonical Buildroot SDK;
   do not use upstream Docker toolchains or deployment targets.
+- Do not enable the upstream PWM sound/auto-export or M300 paths in the first
+  package.  Reconsider either only as a separately reviewed hardware feature.
 - Use direct `fbdev` display output; do not add X11, Wayland, GTK, or a desktop
   stack.
 - Install immutable application assets under `/opt/helixscreen`; persist
@@ -111,9 +157,10 @@ why checking only the root GPL notice is insufficient.
 1. Complete source/dependency closure for the `v1.0.6` candidate using
    AD5M-008's integrity standard; select another fixed source only with a
    recorded reason.
-2. Add a project-specific Buildroot package that invokes only the upstream
-   `ad5m-br` build and staging interfaces, with an explicit, reviewed set of
-   target library dependencies.
+2. Add a project-specific Buildroot package with a small reviewed Buildroot
+   adaptation that uses the SDK sysroot and invokes only the explicit runtime
+   targets and staging interface, with an explicit, reviewed set of target
+   library dependencies.
 3. Add a separate `helixscreen` variant instead of changing `lite` in place.
 4. Add a small project-owned SysV init script and fixed environment that sets
    `HELIX_DISPLAY_BACKEND=fbdev`, the persistent `HELIX_CONFIG_DIR`, and only
@@ -140,9 +187,11 @@ why checking only the root GPL notice is insufficient.
 
 ## Verification
 
-Upstream source inspection only.  No package has been created, no source
-submodule has been accepted, and no HelixScreen binary, installer, updater,
-or deployment script has been run.
+Upstream source inspection and Makefile variable evaluation only.  The
+inspection evaluated the `ad5m-br` linker flags with a supplied cross-prefix;
+it did not compile, link or execute HelixScreen.  No package has been created,
+no source submodule has been accepted, and no HelixScreen binary, installer,
+updater, or deployment script has been run.
 
 ## Hardware verification
 
