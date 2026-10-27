@@ -101,6 +101,27 @@ test to pass.  The implementation also corrected `build_scripts/build.sh` to
 use its required `#!/bin/bash` shebang and validates that wrapper explicitly;
 it uses Bash syntax and must not depend on an incidental `/bin/sh` choice.
 
+### 2026-10-27 controlled Buildroot configuration check
+
+`make validate-config` now runs the separate tracked
+`tests/validate-buildroot-config.sh` entry point.  It resolves the canonical
+Buildroot checkout, requires its `HEAD` to equal the 40-character revision in
+`build_scripts/buildroot/buildroot-revision`, and rejects a dirty checkout
+before Buildroot is invoked.  It then creates a unique directory beneath
+`TMPDIR` and calls only `prepare_variant lite` with `AD5M_BUILD_OUT` set to
+that directory.  The normal build output remains
+`ad5m_enhanced_mod/build_output`; the override exists solely so disposable
+validation can avoid it.
+
+The check asserts that Buildroot produced the `lite` `.config`, that the
+generated configuration has the project-owned common and lite rootfs overlays,
+and that the expected Moonraker and ustreamer selections remain enabled.  The
+temporary output is removed by a shell trap on success, failure, or
+interruption.  This is intentionally a configuration integration check, not a
+target image build: Buildroot may compile its small host-side Kconfig helper,
+but it does not build target packages, download package sources, execute
+target code, or establish any printer behavior.
+
 ## Verification
 
 - `bash -n ad5m_enhanced_mod/tests/validate-static.sh`
@@ -110,9 +131,17 @@ it uses Bash syntax and must not depend on an incidental `/bin/sh` choice.
   syntax passed for 32 active shell scripts in total.
 - `tests/validate-static.sh ad5m_enhanced_mod/build_output` — expected failure
   confirmed; the runner rejects a generated-output directory as its root.
+- `bash -n ad5m_enhanced_mod/build_scripts/env.sh`
+- `bash -n ad5m_enhanced_mod/tests/validate-buildroot-config.sh`
+- `make -C ad5m_enhanced_mod validate-config` — passed against canonical
+  Buildroot `77fb3a9ec7cd1e27910a441e0d75df0cbe51c2de`; initialized and removed
+  only a unique temporary Buildroot output directory, and verified the
+  generated lite configuration's overlays, Moonraker, and ustreamer.
 
-These are software-only static checks.  They did not configure Buildroot,
-compile a target image, execute target code, or establish hardware behavior.
+These are software-only checks.  The static runner did not configure
+Buildroot; the separate configuration runner did configure it in temporary
+output but did not compile a target image, execute target code, or establish
+hardware behavior.
 
 ## Hardware verification
 
@@ -120,8 +149,7 @@ Not applicable to the initial software-only foundation.
 
 ## Remaining work
 
-1. Add the separately controlled canonical-Buildroot configuration check.
-2. Add lint/format checks appropriate to newly introduced shell and Python
+1. Add lint/format checks appropriate to newly introduced shell and Python
    files, without making unavailable host tooling a target-image dependency.
-3. Define Golden G-code fixtures only for a reviewed, non-hardware-emulating
+2. Define Golden G-code fixtures only for a reviewed, non-hardware-emulating
    macro behavior with a clear expected output.
