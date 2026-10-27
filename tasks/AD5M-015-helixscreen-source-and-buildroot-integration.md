@@ -393,6 +393,11 @@ Not run.
 
 ## Remaining work
 
+- `v1.0.6` is not approved as the first local-only production package
+  candidate: AD5M-018 found no narrow compile-time boundary for updater,
+  telemetry, crash-report and debug-bundle transport.  Do not create its
+  package, service, host mock or target build.  AD5M-023 owns the only
+  permitted route to reconsider it.
 - Audit vendored code, generated inputs, build-time downloads and target
   libraries for the `v1.0.6` candidate; the fixed Git-submodule closure is
   recorded above and contains no nested Git source.

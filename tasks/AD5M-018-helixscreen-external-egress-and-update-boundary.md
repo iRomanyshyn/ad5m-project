@@ -1,6 +1,6 @@
 # AD5M-018 HelixScreen external-egress and update boundary
 
-Status: proposed
+Status: in progress
 
 ## Goal
 
@@ -141,6 +141,34 @@ memory maps and backtraces. Exact fields, retention and send cadence still
 need a separate review before implementation. On decline or revocation, the
 project sender must have no identifier, queue or DNS-capable transport to run.
 
+### v1.0.6 production-candidate disposition (2026-10-27)
+
+A fresh read-only checkout of the exact official root commit confirmed that a
+small project adaptation cannot currently establish the required compile-time
+local-only boundary.  `APP_SRCS` starts as a recursive wildcard over the
+application source tree.  At the root Makefile level it filters mock sources
+and the remote-control directory, but it has no equivalent filters or feature
+gate for `update_checker.cpp`, `telemetry_manager.cpp`, `crash_reporter.cpp`,
+`debug_bundle_collector.cpp`, their UI modals, or the dependent application
+initialization and subject-observer call sites.
+
+The normal application explicitly initializes UpdateChecker, CrashReporter and
+TelemetryManager; its UI and diagnostics code also directly references the
+same components.  Removing only the four transport implementation files would
+therefore leave an unreviewed and potentially broad set of stub, UI, lifecycle
+and diagnostics changes to design.  Keeping them while hiding controls or
+relying on `HELIX_DISABLE_AUTO_UPDATES=1` would leave endpoint material and
+egress-capable transport in the artifact.  Neither outcome meets this task.
+
+Accordingly, the official `v1.0.6` candidate is **not approved for the first
+AD5M local-only production package or service**.  This is a scope and security
+boundary decision, not an allegation of malicious intent or a judgment about
+upstream quality.  It does not reject HelixScreen as the project's chosen UI:
+it requires a later pinned upstream revision with a demonstrably narrow
+local-only profile, or an independently reviewed, maintainable upstream-
+compatible adaptation under AD5M-023.  Until then, no binary, `--test` mock,
+installer, package, service, or target build from this candidate is accepted.
+
 ## Repositories affected
 
 - ad5m-project
@@ -272,8 +300,9 @@ Not run.
 
 ## Remaining work
 
-- Design the smallest reviewable project adaptation; the pinned candidate has
-  no suitable upstream compile-time local-only switch beyond remote control.
+- AD5M-023 owns the decision and, if justified, implementation of an
+  upstream-compatible compile-time local-only profile.  The pinned candidate
+  has no sufficiently narrow switch beyond remote control.
 - Produce the upstream telemetry data inventory and consent/revocation copy
   before exposing its toggle. Decide whether the opt-in is a separate package
   profile or one explicitly gated runtime capability.
