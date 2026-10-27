@@ -67,8 +67,9 @@ legacy submodule dependency.
 - proposed: establish a pinned, first-class Buildroot package and persistent
   configuration boundary before enabling HelixScreen in an image; see
   `tasks/AD5M-015-helixscreen-source-and-buildroot-integration.md`
-- proposed: provide a documented primary web UI without requiring users to enter
-  non-standard port `4001`; review the task before implementation; see
+- provide a documented primary web UI without requiring users to enter
+  non-standard port `4001`; implementation remains blocked on the reviewed
+  access policy; see
   `tasks/AD5M-004-stable-web-and-camera-access.md`
 - keep camera configuration stable when the printer address changes; prefer a
   reviewed stable name or same-origin/proxy design over a raw IP address; see
@@ -100,9 +101,9 @@ legacy submodule dependency.
 
 ## Security
 
-- Moonraker authorization
-- trusted_clients policy
-- CORS policy
+- proposed: define Moonraker authorization, trusted-client and CORS policy
+  before changing browser endpoints; see
+  `tasks/AD5M-016-moonraker-lan-authorization-and-browser-origins.md`
 - SSH credential handling
 - firewall/network exposure
 - release integrity

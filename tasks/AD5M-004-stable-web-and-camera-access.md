@@ -1,6 +1,6 @@
 # AD5M-004 Stable web and camera access
 
-Status: proposed
+Status: in progress
 
 ## Goal
 
@@ -60,12 +60,50 @@ and recovery behavior. Implement only the smallest reviewed approach.
 
 ## Implementation notes
 
-No implementation has started. Existing endpoint behavior was identified from
-the repository; no service configuration was changed.
+### 2026-10-27 endpoint and discovery audit
+
+The current image has three independent HTTP listeners:
+
+| Component | Listener | Current role |
+| --- | --- | --- |
+| Mainsail | BusyBox `httpd`, TCP 4000 | static primary UI candidate |
+| Fluidd | BusyBox `httpd`, TCP 4001 | static alternate UI |
+| ustreamer | TCP 8080 | USB-camera stream and snapshot |
+| Moonraker | TCP 7125 | API and WebSocket |
+
+Neither BusyBox site config contains a reverse-proxy rule, so the commented
+`/webcam/?action=stream` example in `moonraker.conf` is not currently exposed
+by the Mainsail or Fluidd listener.  A relative Moonraker webcam URL becomes
+useful only after a listener on the frontend host actually serves that path;
+it is not itself a proxy.
+
+Moonraker's configured `[zeroconf]` component and the already selected
+`python-zeroconf` dependency can announce the printer on the local network.
+This makes an mDNS name a lower-resource candidate than adding a proxy daemon:
+serve the selected static UI on TCP 80 and document a stable
+`http://<device-name>.local/` entry point; configure ustreamer as
+`http://<device-name>.local:8080/...`.  The mDNS name must be persistent and
+unique, not the shared build-time `AD5M` hostname.  A first-boot naming design
+and a real LAN-resolution test are still required before selecting this
+approach.
+
+Moonraker's [webcam API](https://moonraker.readthedocs.io/en/latest/external_api/webcams/)
+supports complete URLs or paths relative to Moonraker's host, and stores
+user-created webcam entries in its database.  A package must not overwrite
+that database on upgrade.  A project-owned, config-sourced default is
+acceptable only if it uses the final stable device name and has an explicit
+migration/override policy.
+
+The existing Moonraker authorization defaults are unsafe as a baseline for
+this work: they disable API keys, trust `0.0.0.0/0`, and allow CORS from `*`.
+They must not be carried forward or widened merely to make the browser URL
+convenient.  AD5M-016 records the separate authorization and browser-origin
+decision that blocks implementation of this task.
 
 ## Verification
 
-Not run.
+Repository and official-documentation inspection only.  No listener,
+Moonraker setting, camera setting, hostname, router, or printer was changed.
 
 ## Hardware verification
 
@@ -73,5 +111,12 @@ Not run.
 
 ## Remaining work
 
-Inspect the current startup scripts and Moonraker webcam configuration before
-selecting an approach.
+1. Define and review AD5M-016's Moonraker authorization/CORS migration before
+   changing browser or API endpoints.
+2. Compare the TCP-80 + persistent mDNS design against a same-origin proxy,
+   including measured storage/RAM cost, WebSocket behavior, and recovery when
+   the camera is absent.
+3. Design a persistent, collision-resistant device name and a camera-default
+   migration that never overwrites a user's webcam database entry.
+4. Build static/service checks, then test browser access, mDNS resolution,
+   camera recovery and access control on a physical LAN separately.
