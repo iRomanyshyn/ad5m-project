@@ -43,6 +43,17 @@ does not claim that it is already packaged or validated.
 - A case-insensitive source scan found no GuppyScreen or Guppy references in
   `ad5m_enhanced_mod` outside ignored generated output.
 
+### Follow-up regression check (2026-10-27)
+
+AD5M-013 subsequently retired KlipperScreen as well, so the earlier
+intermediate verification statement that listed it beside `lite` is historical
+only.  A new static check confirms that `make -C ad5m_enhanced_mod help` lists
+`lite` as the sole variant; dry-running both `guppyscreen` and
+`klipperscreen` fails with "No rule to make target".  A case-insensitive scan
+of active build scripts, overlays, Makefile, README and documentation found no
+reference to either legacy screen.  `bash -n build_scripts/buildroot/post_build.sh`
+also passed.  No Buildroot build or target image was started.
+
 ## Hardware verification
 
 Not run. This task only removes an uninstalled build variant; it does not
