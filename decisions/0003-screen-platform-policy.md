@@ -37,6 +37,6 @@ updater or submodule-provenance audits. Historical tasks AD5M-010 and AD5M-011
 remain rejected records rather than active work. Removing the recipe also
 removes its Git and submodule downloads from the build graph.
 
-This narrows current screen work to HelixScreen, but it does not remove the
-existing `lite` or `klipperscreen` build variants. Any future change to those
-variants is separate from this policy and requires its own reviewed task.
+AD5M-013 retires the remaining KlipperScreen legacy variant, leaving `lite` as
+the only supported build variant until HelixScreen is separately integrated and
+validated. Any future UI variant requires its own reviewed task.

@@ -83,46 +83,38 @@ The resulting layout must be:
 
 ## Configure and verify remotes
 
-The Klipper Mod fork must have our fork as `origin` and xblax as a fetch-only
-reference remote:
+The Klipper Mod fork must have our fork as `origin`:
 
 ```bash
 cd ~/Projects/ad5m/ad5m_enhanced_mod
 git remote -v
 ```
 
-If `upstream` is missing, add and make it fetch-only:
-
-```bash
-git remote add upstream https://github.com/xblax/flashforge_ad5m_klipper_mod.git
-git remote set-url --push upstream DISABLED
-```
+An existing xblax remote is a historical research reference only, regardless
+of its local remote name. Do not fetch it as routine setup; consult it only
+when a scoped task requires a specific review under ADR 0001 and ADR 0004.
 
 The Buildroot repository must retain the official Buildroot project as its
-authoritative `upstream`; xblax is a historical fetch-only reference:
+authoritative `upstream`:
 
 ```bash
 cd ~/Projects/ad5m/buildroot-flashforge-ad5m
 git remote -v
 ```
 
-If a reference remote is missing, add only that remote using the corresponding
-command below. Then make both fetch-only and retrieve metadata:
+If the official `upstream` remote is missing, add it, make it fetch-only, and
+retrieve its metadata:
 
 ```bash
-# Run the applicable command(s) only when that remote is missing.
 git remote add upstream https://gitlab.com/buildroot.org/buildroot.git
-git remote add xblax https://github.com/xblax/flashforge_adm5_buildroot_chroot.git
 
 git remote set-url --push upstream DISABLED
-git remote set-url --push xblax DISABLED
 git fetch upstream --tags
-git fetch xblax
 ```
 
-Do not merge either reference remote merely because it has newer commits. The
+Do not merge the official remote merely because it has newer commits. The
 maintained branch is `ad5m-2025.02`, initially based on official Buildroot tag
-`2025.02.19`.
+`2025.02.19`. Historical third-party sources are not routine setup remotes.
 
 Verify the complete checkout:
 
@@ -140,9 +132,9 @@ do
 done
 ```
 
-A workstation is ready only when all three repositories exist, expected
-remotes are present, the Buildroot checkout is on `ad5m-2025.02`, and there
-are no unexplained modifications.
+A workstation is ready only when all three repositories exist, the `origin`
+and official Buildroot remotes are present, the Buildroot checkout is on
+`ad5m-2025.02`, and there are no unexplained modifications.
 
 ## VS Code and Codex
 
@@ -204,8 +196,8 @@ git config user.email
 
 ## Canonical Buildroot build contract
 
-The Klipper Mod Makefile provides targets such as `make help`, `make lite`,
-and `make klipperscreen`. Its generated output is under
+The Klipper Mod Makefile provides targets such as `make help` and `make lite`.
+Its generated output is under
 `ad5m_enhanced_mod/build_output/`, which is ignored and local-only.
 
 The Klipper Mod uses the sibling `../buildroot-flashforge-ad5m` checkout, not
@@ -228,10 +220,9 @@ packages) are:
 ```bash
 make -C ~/Projects/ad5m/ad5m_enhanced_mod sdk_prepare
 make -C ~/Projects/ad5m/ad5m_enhanced_mod lite_prepare
-make -C ~/Projects/ad5m/ad5m_enhanced_mod klipperscreen_prepare
 ```
 
-The corresponding `sdk`, `lite`, and `klipperscreen` targets
+The corresponding `sdk` and `lite` targets
 perform actual builds. Run them only after checking available disk space and
 when the task calls for a package build. If an existing local output directory
 was configured from another Buildroot source, the wrapper stops; use its

@@ -27,11 +27,22 @@ Our repository:
 
 https://github.com/iRomanyshyn/ad5m_enhanced_mod
 
-Primary upstream:
+Historical third-party reference:
 
 https://github.com/xblax/flashforge_ad5m_klipper_mod
 
-This repository owns printer-specific integration and release packaging.
+This repository is an untrusted research reference, not a primary upstream or
+automatic dependency. It may be consulted only under the controls in
+`decisions/0001-untrusted-historical-sources.md` and
+`decisions/0004-source-hierarchy-and-research-policy.md`.
+
+Official vendor reference:
+
+https://github.com/FlashForge/AD5M_Series_Klipper
+
+The vendor source may be examined for AD5M-specific behavior, but it is not an
+automatic dependency or bulk-import source; see
+`decisions/0004-source-hierarchy-and-research-policy.md`.
 
 ### Buildroot
 
