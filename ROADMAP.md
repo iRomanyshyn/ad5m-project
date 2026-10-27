@@ -20,6 +20,9 @@ legacy submodule dependency.
 - run a full package build from the canonical source contract and inspect its
   artifacts before any printer installation; see
   `tasks/AD5M-007-canonical-package-build-validation.md`
+- resolve the reviewed Klipper `python-msgspec` dependency closure and pin
+  mutable/unhashed release sources before retrying the package build; see
+  `tasks/AD5M-008-package-source-closure-and-integrity.md`
 - record a compatibility matrix for both printer variants, board/MCU revisions,
   stock-host versions, and validated cross-repository commit pairs
 - define a release manifest with component revisions and hashes; add SBOM,
