@@ -41,23 +41,23 @@ identities and the upstream's own declared licenses; none is accepted yet.
 Recursive submodules and generated/downloaded build inputs remain to be
 discovered and audited.
 
-| Path | Gitlink commit | Declared license | Review state |
-| --- | --- | --- | --- |
-| `lib/cpp-terminal` | `48ae2f284084850901c45b6c10a9d68949c1b272` | MIT | pending |
-| `lib/ftxui` | `b1527cb6966679da256409e577a0d44ae322b2e3` | MIT | pending |
-| `lib/glm` | `a583c59e1616a628b18195869767ea4d6faca5f4` | Happy Bunny or MIT | pending |
-| `lib/helix-xml` | `9c8f87a231bc0e9914c2a3a61de0fc254d2f172d` | MIT | pending |
-| `lib/libhv` | `71770e04becaa149e0ef8ffc4d3900c5466ddddb` | BSD-3-Clause | pending |
-| `lib/libjpeg-turbo` | `c85e6b905bf237038faa936dab160ebfc5da0344` | not stated in upstream `COPYRIGHT` | pending |
-| `lib/libnl` | `bdf83151326e365f137fe0e36dc9b1b7aeb1cf33` | LGPL-2.1 | pending |
-| `lib/linenoise` | `452e3793858a15cc006bb3aa3ea06378eb98c5b5` | BSD-2-Clause | pending |
-| `lib/lv_i18n` | `f6ac92ee2c31b57032fc6addc9aa15de2fee4568` | MIT | pending |
-| `lib/lv_markdown` | `77ec2c0c91614a50575a44c39d8db52c057ae681` | MIT | pending |
-| `lib/lvgl` | `85aa60d18b3d5e5588d7b247abf90198f07c8a63` | MIT | pending |
-| `lib/openvdb` | `604ed3828033b84de74f2bc35b01bc655195cb8f` | Apache-2.0 | pending |
-| `lib/sdl2` | `5d249570393f7a37e037abf22cd6012a4cc56a71` | zlib | pending |
-| `lib/spdlog` | `14ab43ec0b9df6cf793c75785ec5f70b65f2f965` | MIT | pending |
-| `lib/wpa_supplicant` | `b5e326d24298ac52fba3c4e5ba5ae79780c78dc9` | BSD-3-Clause | pending |
+| Path | Declared upstream URL | Gitlink commit | Declared license | Review state |
+| --- | --- | --- | --- | --- |
+| `lib/cpp-terminal` | `https://github.com/jupyter-xeus/cpp-terminal.git` | `48ae2f284084850901c45b6c10a9d68949c1b272` | MIT | pending |
+| `lib/ftxui` | `https://github.com/ArthurSonzogni/FTXUI.git` | `b1527cb6966679da256409e577a0d44ae322b2e3` | MIT | pending |
+| `lib/glm` | `https://github.com/g-truc/glm.git` | `a583c59e1616a628b18195869767ea4d6faca5f4` | Happy Bunny or MIT | pending |
+| `lib/helix-xml` | `https://github.com/prestonbrown/helix-xml.git` | `9c8f87a231bc0e9914c2a3a61de0fc254d2f172d` | MIT | pending |
+| `lib/libhv` | `https://github.com/ithewei/libhv.git` | `71770e04becaa149e0ef8ffc4d3900c5466ddddb` | BSD-3-Clause | pending |
+| `lib/libjpeg-turbo` | `https://github.com/libjpeg-turbo/libjpeg-turbo.git` | `c85e6b905bf237038faa936dab160ebfc5da0344` | not stated in upstream `COPYRIGHT` | pending |
+| `lib/libnl` | `https://github.com/thom311/libnl.git` | `bdf83151326e365f137fe0e36dc9b1b7aeb1cf33` | LGPL-2.1 | pending |
+| `lib/linenoise` | `https://github.com/antirez/linenoise.git` | `452e3793858a15cc006bb3aa3ea06378eb98c5b5` | BSD-2-Clause | pending |
+| `lib/lv_i18n` | `https://github.com/lvgl/lv_i18n` | `f6ac92ee2c31b57032fc6addc9aa15de2fee4568` | MIT | pending |
+| `lib/lv_markdown` | `https://github.com/prestonbrown/lv_markdown.git` | `77ec2c0c91614a50575a44c39d8db52c057ae681` | MIT | pending |
+| `lib/lvgl` | `https://github.com/lvgl/lvgl.git` | `85aa60d18b3d5e5588d7b247abf90198f07c8a63` | MIT | pending |
+| `lib/openvdb` | `https://github.com/AcademySoftwareFoundation/openvdb.git` | `604ed3828033b84de74f2bc35b01bc655195cb8f` | Apache-2.0 | pending |
+| `lib/sdl2` | `https://github.com/libsdl-org/SDL.git` | `5d249570393f7a37e037abf22cd6012a4cc56a71` | zlib | pending |
+| `lib/spdlog` | `https://github.com/gabime/spdlog.git` | `14ab43ec0b9df6cf793c75785ec5f70b65f2f965` | MIT | pending |
+| `lib/wpa_supplicant` | `https://github.com/fluispotter/hostap.git` | `b5e326d24298ac52fba3c4e5ba5ae79780c78dc9` | BSD-3-Clause | pending |
 
 The upstream `COPYRIGHT` also declares bundled components, including minilzo
 (GPL-2.0-or-later), quirc (ISC), and libraries nested in submodules.  This is
