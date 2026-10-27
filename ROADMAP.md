@@ -17,6 +17,9 @@ legacy submodule dependency.
 
 - replace the legacy historical Buildroot submodule with a reviewed build
   integration contract; see `tasks/AD5M-001-buildroot-integration-contract.md`
+- run a full package build from the canonical source contract and inspect its
+  artifacts before any printer installation; see
+  `tasks/AD5M-007-canonical-package-build-validation.md`
 - record a compatibility matrix for both printer variants, board/MCU revisions,
   stock-host versions, and validated cross-repository commit pairs
 - define a release manifest with component revisions and hashes; add SBOM,

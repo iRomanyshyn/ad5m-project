@@ -1,6 +1,6 @@
 # AD5M-001 Buildroot integration contract
 
-Status: proposed
+Status: complete
 Priority: first implementation task
 
 ## Goal
@@ -78,16 +78,50 @@ behavior.
 
 ## Implementation notes
 
-No implementation has started.
+- The historical gitlink was pinned to `ae9518dc7d2db7bad68a66020c06593554f970ee`,
+  but its object was not present locally and was not fetched or initialized.
+- The canonical Buildroot source at
+  `77fb3a9ec7cd1e27910a441e0d75df0cbe51c2de` is two documentation commits
+  after official tag `2025.02.19`; its only delta from that tag is `AGENTS.md`.
+- The AD5M external tree and `sdk + base + lite` fragments were accepted by
+  canonical Buildroot `olddefconfig`. The base fragment needed an explicit
+  `BR2_PACKAGE_LIBGPIOD=y` parent so that the already requested tools option
+  is retained.
+- A second historical source reference was found in the backlight package.
+  The exact pinned source commit was fetched only from
+  `consp/flashforge_ad5m_backlight` for review, not from the historical source.
+  Its tracked implementation uses `/dev/disp` ioctls and contains no network
+  client code; its unused release helper can upload to PyPI.
+- The build wrapper's pre-existing `git describe` command failed because this
+  fork has no tag. It now has a tag-or-SHA fallback.
+- The wrapper now uses and validates the canonical Buildroot contract; the
+  legacy gitlink and `.gitmodules` entry were removed.
+- Compatible source revisions validated together:
+  - Klipper Mod: `b33f8cc9d8c1955a542caccaec31983d786d6da3`
+  - Buildroot: `77fb3a9ec7cd1e27910a441e0d75df0cbe51c2de`
 
 ## Verification
 
-Not run.
+- `bash -n build_scripts/env.sh`
+- `bash -n build_scripts/build.sh`
+- `make -C ad5m_enhanced_mod help`
+- `make -C ad5m_enhanced_mod sdk_prepare`
+- `make -C ad5m_enhanced_mod lite_prepare`
+- `make -C ad5m_enhanced_mod klipperscreen_prepare`
+- `make -C ad5m_enhanced_mod guppyscreen_prepare`
+- `AD5M_BUILDROOT_DIR=/tmp/not-a-buildroot-tree make -C ad5m_enhanced_mod sdk_prepare`
+  (expected rejection)
+
+All four configuration-only prepare targets completed against the canonical
+Buildroot source. No Buildroot package target or firmware build was run.
 
 ## Hardware verification
 
-Not applicable until a package-changing implementation is proposed.
+Not run. This work changes build integration only; a future package build and
+printer installation still require separate hardware verification.
 
 ## Remaining work
 
-Inspect the build interface and choose the minimum safe migration approach.
+Run a full package build and inspect artifacts in
+`tasks/AD5M-007-canonical-package-build-validation.md` before any printer
+installation.

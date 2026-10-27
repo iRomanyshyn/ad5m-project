@@ -202,28 +202,47 @@ git config user.name
 git config user.email
 ```
 
-## Current build status
+## Canonical Buildroot build contract
 
 The Klipper Mod Makefile provides targets such as `make help`, `make lite`,
 `make klipperscreen`, and `make guppyscreen`. Its generated output is under
 `ad5m_enhanced_mod/build_output/`, which is ignored and local-only.
 
-At the audited revision, these Makefile targets source Buildroot from the
-`submodules/buildroot` gitlink. That submodule is still configured to the
-historical `loss-and-quick/buildroot-flashforge-5m` repository. The canonical
-`../buildroot-flashforge-ad5m` checkout is intentionally not substituted by
-this setup documentation, because doing so requires a reviewed, scoped change
-to the build integration. Do not initialize or update that legacy submodule as
-part of routine workstation setup. This is a reproducibility gap to resolve in
-a dedicated task; it must establish a reviewed relationship to the official
-Buildroot-derived repository and record the exact compatible revisions.
+The Klipper Mod uses the sibling `../buildroot-flashforge-ad5m` checkout, not
+a Buildroot submodule. Its required revision is tracked in
+`ad5m_enhanced_mod/build_scripts/buildroot/buildroot-revision`:
 
-Until that task is completed, `make help` is safe for discovering declared
-targets, but a produced package must not be described as reproducible from the
-three canonical repositories alone. A future build task should document the
-canonical build and variant commands, expected artifacts, storage needs,
-clean/rebuild procedure, hashes, and the distinction between software-only and
-printer testing.
+```text
+77fb3a9ec7cd1e27910a441e0d75df0cbe51c2de
+```
+
+Before configuring any build, the wrapper verifies that this source is a clean
+Git checkout at exactly that revision. A different checkout may be supplied
+with `AD5M_BUILDROOT_DIR`, but it must match the same reviewed revision. This
+prevents accidentally mixing host tools or configuration output from a
+different Buildroot tree.
+
+Configuration-only validation commands (they do not build firmware or download
+packages) are:
+
+```bash
+make -C ~/Projects/ad5m/ad5m_enhanced_mod sdk_prepare
+make -C ~/Projects/ad5m/ad5m_enhanced_mod lite_prepare
+make -C ~/Projects/ad5m/ad5m_enhanced_mod klipperscreen_prepare
+make -C ~/Projects/ad5m/ad5m_enhanced_mod guppyscreen_prepare
+```
+
+The corresponding `sdk`, `lite`, `klipperscreen`, and `guppyscreen` targets
+perform actual builds. Run them only after checking available disk space and
+when the task calls for a package build. If an existing local output directory
+was configured from another Buildroot source, the wrapper stops; use its
+corresponding explicit clean target before retrying. Do not delete output
+automatically.
+
+Changing the pinned revision requires a reviewed update to the Klipper Mod
+contract, the coordination task record, and the validation evidence. A future
+release task should document expected artifacts, storage needs, hashes, and the
+distinction between software-only and printer testing.
 
 ## Working across computers
 
