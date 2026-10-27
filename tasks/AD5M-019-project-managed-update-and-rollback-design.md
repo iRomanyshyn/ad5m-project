@@ -140,6 +140,42 @@ canonical encoding and a release that is validly signed but incompatible with
 the device. A human-facing version string may be displayed, but it must not be
 used as the authorization decision or rollback ordering on its own.
 
+### Candidate health-check boundary (2026-10-27)
+
+The current init order starts `S54mcu_update`, then Klipper (`S60`) and
+Moonraker (`S65`), followed by the web servers and camera service. The Klipper
+and Moonraker scripts fork their daemons and return immediately, so an init
+exit status proves neither configuration loading nor Klippy connectivity.
+More seriously, the current `S54mcu_update` will flash MCUs when its retained
+Klipper-version marker differs. A candidate booted only to assess health must
+therefore use an update-specific boot profile that explicitly excludes that
+service and any equivalent automatic firmware action.
+
+At the pinned Moonraker revision, its read-only `/server/info` response
+reports `klippy_connected`, `klippy_state`, `failed_components` and
+`missing_klippy_requirements`. These are suitable *inputs* to a local
+readiness check after the project defines its final Moonraker authorization
+profile; their exact expected values must be pinned to the release profile,
+not guessed from a public LAN request.
+
+The first-release health check must be bounded and read-only with respect to
+the printer. At minimum it should verify the selected release identifier and
+mounted paths, expected service executables/configuration, the controlled
+Moonraker readiness result, and the selected UI process or local UI socket
+when HelixScreen becomes part of the release profile. It must not send G-code,
+home or move axes, heat, toggle power, restart firmware, start a print, upload
+a file, contact the network, require a camera frame, or invoke MCU tools.
+Network reachability, NTP, mDNS, an external telemetry receiver and optional
+camera hardware are expressly not proof that a candidate is healthy and must
+not prevent a safe local rollback.
+
+The updater must persist a bounded machine-readable outcome containing the
+candidate release ID, step, error class and rollback reason. It needs an
+attempt counter/deadline independent of the candidate root so a reboot loop
+or an unreadable candidate cannot retry forever. Only after all checks pass may
+it mark the candidate known-good; otherwise the independent boot selector must
+choose the prior known-good release before normal services run.
+
 ## Repositories affected
 
 - ad5m-project
@@ -184,6 +220,11 @@ used as the authorization decision or rollback ordering on its own.
   check, failed migration, missing runtime dependency or boot-loop must return
   to the previous known-good release without touching motion, heaters, MCU
   firmware or printer configuration safety limits.
+- Run a candidate under an update-specific profile that excludes the current
+  version-marker-driven `S54mcu_update` flow. The health check must use only
+  release-pinned, local and read-only probes; it must not make camera, LAN,
+  cloud, telemetry or time synchronization a prerequisite for keeping a
+  release.
 - Make rollback available through a local recovery path that does not need
   Internet, GitHub, upstream HelixScreen or a working touchscreen.
 - The update agent runs with the minimum necessary privilege, uses no shell
