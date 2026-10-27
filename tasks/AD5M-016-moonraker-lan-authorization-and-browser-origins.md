@@ -143,6 +143,40 @@ sanitizes/replaces all client-provided forwarding headers before proxying.  It
 still needs Moonraker JWT/API-key authorization and does not remove the
 bootstrap requirement.
 
+### Persistence and migration audit (2026-10-27)
+
+The existing installer makes `/root/printer_data/database` persistent by
+moving it below `/mnt/data/.klipper_mod/static` and replacing the live path
+with a symlink.  The current update documentation independently lists the
+Moonraker database among the few preserved items.  Moonraker `v0.9.3` stores
+normal users and its one system API key in that database.  Therefore a normal
+update should preserve an existing user's login and slicers' API key; it must
+not solve an authorization migration by deleting or recreating the database.
+This behaviour still needs an update-path test on a disposable image/chroot.
+
+In contrast, the post-build script clears the image's staged
+`/root/printer_data` and copies the seed `moonraker.conf` anew.  The security
+policy in that seed is consequently release-controlled, while credentials are
+per-printer persistent state.  Migration design must test all of these states:
+
+1. a new installation with no normal user;
+2. an existing installation with a normal user and API key; and
+3. an existing installation that has the old permissive configuration but no
+   normal user.
+
+Case 3 is the dangerous edge case: applying `force_logins: true` with no
+normal user does not activate the protection, yet removing all trusted clients
+at the same time leaves no remote path to create the first user.  The approved
+bootstrap must deliberately handle it without a shared credential, a
+temporary LAN-wide allow-list, or destruction of the persistent database.
+
+The exact CORS origin also cannot be left as a build-time placeholder when the
+printer's persistent hostname is unique.  The implementation must either
+generate and safely validate a per-device origin from that hostname, or use a
+reviewed same-origin frontend.  Do not replace it with `http://*.local` merely
+for convenience: v0.9.3 accepts it, but it is broader than the intended single
+printer origin.
+
 ## Acceptance criteria
 
 - No release variant seeds `trusted_clients: 0.0.0.0/0` or `cors_domains: *`.
@@ -152,6 +186,10 @@ bootstrap requirement.
   OctoPrint-compatibility upload path are tested independently.
 - The selected first-user bootstrap method is tested so no unauthenticated LAN
   client can claim a trusted identity with a forwarding header.
+- Update-path tests preserve an existing normal user and API key, do not
+  recreate the Moonraker database, and cover the legacy no-user state.
+- The browser CORS origin is derived from the final per-device name or avoided
+  with a reviewed same-origin design; no broad `.local` wildcard is added.
 - Upgrade does not silently grant new remote control to a previously
   untrusted network client.
 - Security, software-only, and physical-LAN test evidence are distinct.
