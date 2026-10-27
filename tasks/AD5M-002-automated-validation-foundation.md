@@ -52,7 +52,41 @@ only tests with a clear owner and failure diagnosis.
 
 ## Implementation notes
 
-No implementation has started.
+### 2026-10-27 first static-test boundary
+
+AD5M-001's canonical Buildroot relationship is now defined, but the external
+tree has no `tests/`, CI workflow, `validate` Make target or host-side test
+runner.  Its top-level Makefile currently declares `VARIANTS = lite`; the
+observed `make help` output lists only that variant.  Dry-running the removed
+`guppyscreen` and `klipperscreen` targets fails with "No rule to make target",
+and the active source scan has no reference to either legacy UI outside local
+generated output.
+
+The first implementation should remain deliberately small: add one
+project-owned Bash static-test entry point (for example
+`tests/validate-static.sh`) and a `make validate` wrapper.  It must take the
+external-tree root as its only input, create no build output, and exercise
+only ordinary host tools already required for the project (`bash`, `make`,
+`find`, `grep` and `git`).  Its initial assertions should be:
+
+1. `make help` exposes `lite` as the sole supported variant.
+2. `make -n guppyscreen` and `make -n klipperscreen` both fail; a test fixture
+   with a deliberately reintroduced legacy target must prove the check fails.
+3. Active Makefiles, Buildroot package/config registration, overlays,
+   post-build logic and supported documentation contain neither legacy UI.
+   Historical task records and ignored `build_output/` are explicitly outside
+   that production-source scope.
+4. Shell syntax checks cover the top-level build wrapper and every project
+   shell file that the static package path invokes, including `post_build.sh`.
+5. The test rejects an accidental build-output path or legacy Buildroot
+   submodule reference rather than initializing, fetching or compiling it.
+
+The runner should print each failed invariant and the inspected path, not a
+generic pass/fail result.  `make lite_prepare` remains a separately named
+configuration-integration check because it can initialise Buildroot state;
+neither it nor a full image build belongs in the first static target.  This is
+a design record only: no test framework, CI configuration or Makefile target
+has been added by this task update.
 
 ## Verification
 
@@ -64,5 +98,10 @@ Not applicable to the initial software-only foundation.
 
 ## Remaining work
 
-Choose the first narrow test set after AD5M-001 defines the canonical build
-source relationship.
+1. Implement and review the static-test entry point described above, including
+   its intentionally failing fixture.
+2. Add the separately controlled canonical-Buildroot configuration check.
+3. Add lint/format checks appropriate to newly introduced shell and Python
+   files, without making unavailable host tooling a target-image dependency.
+4. Define Golden G-code fixtures only for a reviewed, non-hardware-emulating
+   macro behavior with a clear expected output.
