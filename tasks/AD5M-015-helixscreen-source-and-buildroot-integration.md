@@ -257,6 +257,9 @@ is a dependency-selection candidate, not an enabled package configuration.
 - Do not execute, ship, source, or patch in any upstream installer/deployer.
   Do not rely on Forge-X, ZMOD, Klipper Mod, or other community integration
   scripts.
+- Satisfy AD5M-018 before accepting a package: the upstream candidate's
+  remote-control, self-update, telemetry, crash-report and debug-bundle
+  egress paths are not an acceptable default for the local-only AD5M variant.
 - Provide an AD5M-specific SysV service that starts after the needed printer
   services without blocking their startup, handles a failed UI gracefully, and
   does not stop Klipper or Moonraker.
@@ -343,3 +346,5 @@ Not run.
 - Measure the packaged image's disk/RAM impact and boot behavior.
 - Determine exact framebuffer, touch device, calibration, and backlight values
   from a physical AD5M before setting hardware-specific environment values.
+- Complete AD5M-018's local-only external-egress boundary before creating a
+  package or service from this source.
