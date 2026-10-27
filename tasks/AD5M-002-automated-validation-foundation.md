@@ -1,6 +1,6 @@
 # AD5M-002 Automated validation foundation
 
-Status: proposed
+Status: in progress
 
 ## Goal
 
@@ -66,8 +66,8 @@ The first implementation should remain deliberately small: add one
 project-owned Bash static-test entry point (for example
 `tests/validate-static.sh`) and a `make validate` wrapper.  It must take the
 external-tree root as its only input, create no build output, and exercise
-only ordinary host tools already required for the project (`bash`, `make`,
-`find`, `grep` and `git`).  Its initial assertions should be:
+only ordinary Fedora host tools (`bash`, `sh`, `make`, `find`, `grep`,
+`git` and `mktemp`).  Its initial assertions should be:
 
 1. `make help` exposes `lite` as the sole supported variant.
 2. `make -n guppyscreen` and `make -n klipperscreen` both fail; a test fixture
@@ -84,13 +84,35 @@ only ordinary host tools already required for the project (`bash`, `make`,
 The runner should print each failed invariant and the inspected path, not a
 generic pass/fail result.  `make lite_prepare` remains a separately named
 configuration-integration check because it can initialise Buildroot state;
-neither it nor a full image build belongs in the first static target.  This is
-a design record only: no test framework, CI configuration or Makefile target
-has been added by this task update.
+neither it nor a full image build belongs in the first static target.
+
+### 2026-10-27 initial implementation
+
+The external tree now provides `make validate`, which runs the tracked
+`tests/validate-static.sh` entry point.  It rejects a root path inside
+`build_output/`, does not call the build wrapper, and creates only a temporary
+host directory for captured diagnostics.  The initial checks cover the single
+`lite` variant, the expected failure of both retired screen targets, absence
+of submodule metadata and active legacy-source references, and syntax of the
+active shell scripts below `build_scripts`, `build_overlays` and
+`device_files`.  The tracked `tests/fixtures/legacy-ui/Makefile` deliberately
+declares `lite guppyscreen`; the same variant parser must reject it for the
+test to pass.  The implementation also corrected `build_scripts/build.sh` to
+use its required `#!/bin/bash` shebang and validates that wrapper explicitly;
+it uses Bash syntax and must not depend on an incidental `/bin/sh` choice.
 
 ## Verification
 
-Not run.
+- `bash -n ad5m_enhanced_mod/tests/validate-static.sh`
+- `make -C ad5m_enhanced_mod validate` — passed: sole `lite` variant, both
+  retired targets unavailable, negative fixture rejected, no submodule or
+  legacy-reference finding, valid Bash syntax for the top-level wrapper, and
+  syntax passed for 32 active shell scripts in total.
+- `tests/validate-static.sh ad5m_enhanced_mod/build_output` — expected failure
+  confirmed; the runner rejects a generated-output directory as its root.
+
+These are software-only static checks.  They did not configure Buildroot,
+compile a target image, execute target code, or establish hardware behavior.
 
 ## Hardware verification
 
@@ -98,10 +120,8 @@ Not applicable to the initial software-only foundation.
 
 ## Remaining work
 
-1. Implement and review the static-test entry point described above, including
-   its intentionally failing fixture.
-2. Add the separately controlled canonical-Buildroot configuration check.
-3. Add lint/format checks appropriate to newly introduced shell and Python
+1. Add the separately controlled canonical-Buildroot configuration check.
+2. Add lint/format checks appropriate to newly introduced shell and Python
    files, without making unavailable host tooling a target-image dependency.
-4. Define Golden G-code fixtures only for a reviewed, non-hardware-emulating
+3. Define Golden G-code fixtures only for a reviewed, non-hardware-emulating
    macro behavior with a clear expected output.
