@@ -176,4 +176,6 @@ Not applicable to the initial software-only foundation.
 ## Remaining work
 
 1. Define Golden G-code fixtures only for a reviewed, non-hardware-emulating
-   macro behavior with a clear expected output.
+   macro behavior with a clear expected output.  AD5M-022 owns the required
+   isolated Klipper harness; do not replace it with a project-written Jinja or
+   G-code interpreter.
