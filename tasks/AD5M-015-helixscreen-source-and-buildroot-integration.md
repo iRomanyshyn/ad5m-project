@@ -204,6 +204,67 @@ to invoke only explicit reviewed runtime executables, and must make feature
 selection independent of which libraries happen to exist in the build host or
 SDK.
 
+### Runtime-asset manifest boundary (2026-10-27)
+
+Read-only inspection of the exact candidate source makes the staging problem
+more concrete.  Its `install DESTDIR=...` target unconditionally copies
+`ui_xml` plus all of `assets/fonts`, `assets/images`, `assets/sounds`,
+`assets/config`, and `assets/filaments.json`; it does not invoke the
+upstream's release-cleanup helper.  Before pruning its source-tree build
+scaffolding, `ui_xml` is about 5.8 MiB.  The copied asset inputs are about
+40 MiB fonts, 32 MiB images, 900 KiB tracker sounds, 716 KiB configuration,
+and 100 KiB filament data.  These are source-input measurements, not a built
+binary or final-rootfs measurement.
+
+Upstream's separate release-cleanup recipe is useful evidence but is not an
+AD5M packaging command: it removes generated font C sources, TTF/OTF font
+inputs, macOS `.icns` files and MDI development metadata.  At this revision,
+the remaining font files alone are about 5.1 MiB, predominantly the runtime
+CJK font binaries.  Its source comments say that a particular AD5M release
+profile omits the tracker player and consequently deletes `assets/sounds`.
+That claim is not project hardware evidence; AD5M may omit the player and
+sounds only if the project build flags and physical resource review agree.
+
+The upstream cleanup does **not** resolve product scope.  In particular,
+`assets/images/printers` is about 24 MiB and is intentionally enumerated by
+the runtime printer-image picker.  It includes unrelated printer models;
+the two AD5M images are only about 413 KiB and 157 KiB respectively, while
+the generic fallback is about 578 KiB.  A constrained AD5M manifest may
+eventually keep only the two supported models and the generic fallback, but
+only with a reviewed product decision for the image-picker behavior and
+fallback paths.  Filename deletion is not sufficient evidence that a UI path
+cannot still select a missing image.
+
+Several copied configuration inputs are executable or safety-relevant in
+effect, rather than passive presentation data.  The candidate's
+`assets/config/platform/hooks-ad5m-kmod.sh`, for example, stops Xorg and
+multiple alternate UIs and invokes process-killing logic; neighbouring hooks
+and presets target Forge-X, ZMOD and other unrelated platforms.  The generic
+`helix_macros.cfg` and AD5M presets also supply G-code macro names and
+hardware expectations.  Do not stage, invoke or seed any of those files in
+the first project package merely because upstream `install` copies them.
+Their presence is research input only and must not overwrite the project's
+printer configuration or establish a competing UI-management path.
+
+The package design must therefore supply a project-owned, versioned manifest
+and stage only its entries.  Its initial review must explicitly classify:
+
+| Asset class | Initial policy |
+| --- | --- |
+| runtime binary, reviewed `ui_xml`, icons and only code-referenced common images | retain only after source-path and size review |
+| compiled font objects and required locale/CJK runtime data | retain according to the selected language/font tier; never regenerate during package build |
+| AD5M/AD5M Pro image plus generic fallback | candidate minimal image set; verify picker and fallback behavior |
+| `assets/filaments.json`, printer database, tips and themes | data review and explicit ownership before inclusion; user changes stay in the writable config layer |
+| default layout and panel-widget seed | replace with a project-reviewed AD5M seed; seed once without overwriting the user's layout |
+| `platform/` hooks, Forge-X/ZMOD/other-platform presets, generic macro seed, test G-code/timelapse data, developer metadata and tracker sounds | exclude unless a separately reviewed project feature names an exact file and consumer |
+
+The wrapper must not call an upstream release/deploy/installer target to obtain
+this result.  It should stage the explicit manifest after the ordinary
+reviewed build, fail if a declared file is missing or an undeclared file would
+be installed, and emit the file list plus SHA-256 digests as build evidence.
+The manifest is still a proposal: it requires target build, startup and
+physical-display measurements before any file set is accepted.
+
 ### Buildroot ownership audit (2026-10-27)
 
 The pinned canonical Buildroot tree already packages and stages `libnl`,
