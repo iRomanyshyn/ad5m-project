@@ -95,6 +95,32 @@ that database on upgrade.  A project-owned, config-sourced default is
 acceptable only if it uses the final stable device name and has an explicit
 migration/override policy.
 
+### 2026-10-27 port-80 implementation audit
+
+No additional HTTP daemon is necessary for the smallest browser-URL change.
+The image already runs Mainsail using one BusyBox `httpd` process on TCP 4000;
+the BusyBox configuration includes HTTPD with TCP 80 as its default feature.
+The Mainsail init script can therefore become the single static site listener
+on TCP 80.  No other project init script currently claims that port.  Fluidd
+may remain an explicitly secondary listener on 4001 during migration, but it
+must not be advertised as the primary UI.
+
+This candidate intentionally does not proxy Moonraker or ustreamer.  Mainsail
+would retain its direct Moonraker configuration on TCP 7125, while the camera
+would retain its independent TCP 8080 endpoint.  The resulting documented
+addresses would be `http://<device-name>.local/` for the UI and
+`http://<device-name>.local:8080/...` for the camera.  This achieves the
+no-`:4001` requirement with one fewer long-running process than a proxy design,
+but it is still blocked on AD5M-016's reviewed authentication/CORS migration
+and AD5M-017's persistent name.
+
+Before changing the init script, validate an image/chroot with the selected
+UI: static asset delivery on port 80, Moonraker HTTP and WebSocket calls from
+the exact browser origin, UI login/bootstrap, direct native slicer upload,
+retained OctoPrint-compatibility upload, camera absence, and clean service
+restart.  This is a software-only candidate; physical LAN and camera tests
+remain separate.
+
 The existing Moonraker authorization defaults are unsafe as a baseline for
 this work: they disable API keys, trust `0.0.0.0/0`, and allow CORS from `*`.
 They must not be carried forward or widened merely to make the browser URL
