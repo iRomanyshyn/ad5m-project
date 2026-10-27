@@ -83,6 +83,25 @@ work and links to that history.  Ideas or observable interface facts may be
 used as research input under ADR-0004, but that attribution is not a reason
 to retain the package or transplant its implementation wholesale.
 
+### 2026-10-27 scoped vendor-reference check
+
+The official Flashforge reference was checked at the already-recorded commit
+`6f479ea5f23c1f69d569cc5d567e14707e97b7b2`, under the read-only procedure in
+AD5M-014.  Its tree is a Klipper source tree; it contains generic Klipper
+display/PWM code but no Linux kernel tree, device tree, display-driver headers
+or identified host-side display-control implementation.  A text search for
+`/dev/disp` and `DISP_LCD_` returned no match.  The literal `0x102` occurs
+only in unrelated MCU/CRC headers, not as a display ABI declaration.  The
+repository's `fw-Ad5m` directory contains opaque firmware artifacts, which
+are not valid substitute evidence for this task and were not executed or
+accepted.
+
+Therefore this vendor repository does **not** establish the `/dev/disp` ABI
+or validate the four existing numeric ioctl values.  A future implementation
+needs separately published kernel/UAPI source or headers plus a controlled
+physical-display review.  Until then, treat the current values as an observed
+compatibility constraint, not an authoritative interface to reimplement.
+
 ### Candidate direction
 
 After the vendor kernel/UAPI and a physical AD5M confirm the interface, add a
