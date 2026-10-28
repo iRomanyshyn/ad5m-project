@@ -76,6 +76,22 @@ and cannot replace removing unwanted application behavior.
   later use an isolated target network and packet capture to verify both
   offline behavior and each opted-in path.
 
+## Initial implementation — 2026-10-28
+
+Integration commit `6433313` changes the legacy `S45ntpd` service to read the
+root-owned `/etc/default/ad5m-ntp` file.  The shipped file sets
+`NTP_ENABLED=0` and has an empty `NTP_SERVER`; the service therefore reports
+that it is disabled and exits successfully without starting `ntpd`.  There is
+no bundled public NTP hostname.  A future owner-facing configuration flow may
+write an explicit server and enable the service, but must first provide the
+validation, persistence and privacy behavior required above.
+
+`tests/validate-static.sh` checks that the configuration exists, remains
+opt-in, and contains no `pool.ntp.org` default.  `make validate` passed after
+the change.  The test does not execute target `ntpd`, resolve DNS, capture a
+packet, or establish target offline/opt-in behavior; those are later network
+and hardware evidence.
+
 ## Requirements
 
 - Inventory every boot-time or scheduled outbound endpoint, protocol and
