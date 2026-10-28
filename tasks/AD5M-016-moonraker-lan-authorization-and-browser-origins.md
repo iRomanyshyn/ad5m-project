@@ -221,6 +221,57 @@ tested in an isolated non-printer environment before it changes the seed
 configuration.  A universal trusted range, a shared setup password and a
 "brief" unauthenticated LAN window remain rejected.
 
+### Proposed practical bootstrap: SSH-authorized loopback setup — 2026-10-28
+
+The project's per-printer root password makes a simple home-LAN first-access
+path possible without turning every LAN client into a Moonraker administrator.
+On a fresh installation, Moonraker should initially bind only to
+`host: 127.0.0.1`, with a loopback-only trusted entry solely for the local
+setup command.  The owner connects through Dropbear using their unique
+per-printer password and runs one documented `ad5m-access-setup` command.  It
+asks for the normal Moonraker username and password, invokes the supported
+local `POST /access/user` API, and only after that succeeds transitions the
+service to its ordinary LAN listener with `force_logins: true` and no
+`trusted_clients` entries.  The owner then uses the browser login and the
+Moonraker API key for a slicer in the normal way.
+
+This is deliberately not a permanent "local-only" product mode: it is a
+one-time, owner-authenticated transition to normal self-hosted LAN operation.
+It does add one SSH command during first setup, but avoids a new account,
+cloud relay, reverse proxy, shared setup secret or fragile browser pairing
+ceremony.  A later physical-screen setup flow may improve that experience,
+but is not required for the first alpha.
+
+The listener boundary is essential.  Inspection of the pinned Moonraker
+source shows that `[server] host` defaults to `0.0.0.0`, while its HTTP server
+always enables Tornado `xheaders=True`.  Consequently, a loopback entry in
+`trusted_clients` is **not** safe while the TCP listener is reachable from the
+LAN: a remote peer may be able to present forwarding headers that alter the
+observed address.  The loopback trust exists only while Moonraker itself is
+bound to loopback; it must be removed before the service is rebound to the
+LAN.  The documented API also confirms that `POST /access/user` is protected,
+so the helper must use the supported API rather than edit Moonraker's database
+directly.
+
+Before implementation, prove in a disposable rootfs/mock that:
+
+1. fresh loopback-only mode rejects a non-loopback connection and accepts the
+   setup command's local request;
+2. a failed request or a malformed username/password leaves the listener
+   loopback-only and does not create a partial user;
+3. only a successful user creation writes the candidate LAN configuration,
+   removes loopback trust, restarts Moonraker, and leaves a recovery backup;
+4. after transition, password/JWT browser access and API-key slicer access
+   work while an unauthenticated request and forwarded-address spoof attempt
+   fail; and
+5. the existing persistent database keeps a previously provisioned user and
+   API key across an update or rollback without rerunning bootstrap.
+
+The exact generated CORS origin remains a separate prerequisite: the final
+per-printer hostname and the Mainsail/Fluidd origin port must be known before
+the LAN configuration can be considered complete.  Do not paper over that
+with a broad `.local` or `*` wildcard.
+
 ## Verification
 
 Not run.
