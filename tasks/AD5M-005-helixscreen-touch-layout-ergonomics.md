@@ -132,9 +132,42 @@ copy merely to change pixel coordinates.  A separate input setting can disable
 Home edit mode or tune the global long-press delay, but that changes all
 long-press gestures and is not a substitute for safer action placement.
 
+### 2026-10-28 action-placement audit
+
+The exact official `v1.0.6` root commit
+`11230009fa09b4509d0d05f482feaeef2e94c854` was re-read in a temporary,
+root-only checkout.  `git fsck --no-dangling` passed; no submodule was
+initialised and no build, test, executable, installer or printer interaction
+occurred.  The following is static source evidence for a future mock review,
+not an assertion about the final AD5M screen.
+
+| Surface | Placement control | Relevant safety behaviour | AD5M initial-layout implication |
+| --- | --- | --- | --- |
+| Home `Print Controls` widget | Whole widget can be put on a page, but its declared size is fixed at 2×1 cells; it has no resize range. Its XML is a horizontal flex row of equal Pause/Resume and Stop buttons. | Stop invokes the upstream cancel-confirmation modal. | Do not seed this widget on the main AD5M Home page. If it is offered later, put it on a deliberate controls page with surrounding empty cells; configuration cannot separate its two buttons. |
+| Print Status panel | Not part of the Home grid. It has a fixed two-row action area: Pause shares a row with Light/optional Timelapse, while Cancel shares the next row with Tune. | Cancel uses the same confirmation flow. | Review this panel at native AD5M resolution; it cannot be made safe by Home dashboard placement. |
+| Print Status E-Stop | Fixed 44×44 floating top-right button, outside the Home grid. | The safety manager defaults E-Stop confirmation to on and passes that setting to the action handler. | Preserve that default in the future first-run seed and test the confirmation target on the resistive display. |
+| Advanced-panel emergency bar | Fixed panel layout; landscape places E-Stop, Restart Klipper and Firmware Restart in one row. Portrait alone stacks them. | E-Stop confirmation is governed by the same safety setting. | Treat it as a separate adjacent-control review on AD5M's landscape panel; Home configuration cannot improve it. |
+| Home favourite macro | Configurable as a tile and can be moved/sized. | Upstream forces confirmation for macros classified dangerous (including `EMERGENCY_STOP` and `FIRMWARE_RESTART`); ordinary macro confirmation remains a safety setting. | Do not preseed high-consequence favourite macros until the AD5M macro mapping and confirmation flows are reviewed. |
+
+This establishes an initial no-fork prototype policy: use the normal Home grid
+for low-risk status/navigation widgets, leave deliberate empty space around a
+controls-page widget if it is enabled, and rely on the dedicated Print Status
+panel for active-print controls until physical testing demonstrates whether its
+fixed layout is acceptable.  The package seed must be applied only on first
+creation of the persistent configuration; it must never reset a user's edited
+layout or safety choices on upgrade.
+
+The highest-value upstream contribution, if physical testing finds the fixed
+Home widget unacceptable, is a supported separated/vertical Print Controls
+layout.  It should be proposed upstream with screenshots and touch evidence;
+an AD5M-only pixel-coordinate fork remains out of scope.
+
 ## Verification
 
-Not run.
+2026-10-28 static source audit only: the official `v1.0.6` root was checked
+at `11230009fa09b4509d0d05f482feaeef2e94c854`; `git fsck --no-dangling`
+passed.  No HelixScreen binary, mock mode, test suite, installer or package
+build was run.
 
 ## Hardware verification
 
@@ -145,10 +178,10 @@ Not run.
 1. Complete AD5M-015's source and dependency closure before adding a package.
 2. Build the pinned source natively and use `--test` plus a screenshot for the
    first dashboard prototype.
-3. Inventory the AD5M controls that are adjacent today; record their
-   consequence and the specific grid/confirmation treatment.
-4. Use the source-level boundary above to assess the fixed Pause/Stop widget
-   and floating E-Stop; capture the decision in the mock screenshot review.
+3. Build the no-fork candidate seed from the action-placement policy above and
+   inventory any AD5M macro mappings before enabling favourite macro tiles.
+4. Use the source-level boundary above to assess the fixed Home, Print Status,
+   E-Stop and Advanced-panel controls in a mock screenshot review.
 5. Create the AD5M-specific package, service, and persistent-config handoff
    only after the source review approves a fixed upstream version.
 6. Perform a separately recorded physical touch and boot-transition review.
