@@ -135,8 +135,24 @@ operation or suppress a safety decision.
 
 ## Verification
 
-Not run.  The finding is source-only; no target script or flash utility was
-executed.
+### 2026-10-28 immediate automatic-path removal
+
+The base-image `S54mcu_update` init slot is now an explicit no-op and
+`install_steps.sh` no longer invokes it. This removes the two normal-path
+triggers that previously flashed both controllers because a Klipper host
+version marker differed: ordinary chroot boot and install completion.
+
+This intentionally does **not** implement a new MCU flasher or claim that a
+candidate is compatible with stock controller firmware. The legacy explicit
+stock/uninstall path remains untouched pending AD5M-026 recovery evidence:
+altering it without proof that stock boot works with the retained controller
+state would trade one unevidenced recovery risk for another. It must not be
+used as an automatic update mechanism.
+
+`make -C ad5m_enhanced_mod validate` statically verifies that `S54mcu_update`
+cannot call an update action and `install_steps.sh` cannot start that service.
+This was source-only validation; no target script, flash utility, serial
+device, controller or printer was executed.
 
 ## Hardware verification
 

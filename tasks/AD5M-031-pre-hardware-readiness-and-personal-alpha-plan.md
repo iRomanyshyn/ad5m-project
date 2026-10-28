@@ -126,6 +126,11 @@ that evidence and may turn it into a separately reviewed installation plan.
 records.  No source build, target image, installer, adapter or printer was
 executed by this planning task.
 
+2026-10-28: normal boot and install-completion automatic MCU-flash triggers
+were removed from the base image and covered by a source-only static check
+(AD5M-034). The retained explicit stock/uninstall path still requires recovery
+evidence; this does not make an installation or MCU transition hardware-ready.
+
 ## Hardware verification
 
 Not run.  P3 onward require a separate, deliberate physical session.
