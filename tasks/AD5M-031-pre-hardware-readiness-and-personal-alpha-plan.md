@@ -87,7 +87,7 @@ checkpoint, not a claim that the project is ready to install:
 | Area | Required non-hardware outcome | Current direction |
 | --- | --- | --- |
 | Privileged/update controls | Authenticated release/update design, removable-media boundary and explicit non-automatic MCU-operation contract | AD5M-019, AD5M-025, AD5M-027 and AD5M-034 define the direction; implementation/fault injection remains. |
-| Identity and LAN access | Per-printer credential/bootstrap and hostname/CORS plan that does not need a LAN-wide exception | AD5M-016, AD5M-017 and AD5M-029; a disposable non-printer validation is still required. |
+| Identity and LAN access | Per-printer SSH credential and a documented first-claim Moonraker/browser path; after first user, credentials/API key rather than LAN IP are the access boundary | AD5M-016, AD5M-017 and AD5M-029; a disposable non-printer validation is still required. |
 | External network | Complete boot/scheduled egress inventory and owner-controlled capability policy | AD5M-032 records the first profile; public NTP is no longer an implicit default, while an owner-selectable path remains. |
 | Runtime provenance | Reviewed disposition for Klipper deltas, local patches and every binary module | AD5M-030/035 have a concrete immediate safety fix; AD5M-033 remains blocked on vendor kernel source/config provenance. |
 | UI selection | A HelixScreen candidate with reviewed dependency/source closure and a documented owner-control boundary | AD5M-018/023 retain the audit; strict local-only is optional rather than a universal package blocker. |

@@ -10,11 +10,15 @@ client privileged printer control.
 
 ## Context
 
-The current `printer_configs/moonraker.conf` disables API keys, trusts
-`0.0.0.0/0`, and permits `cors_domains: *`.  Moonraker documents trusted
-clients as full API access and reserves a global CORS wildcard for development,
-not production.  The web/camera work in AD5M-004 must not preserve or broaden
-these defaults simply to make a UI URL work.  See Moonraker's
+The historical `printer_configs/moonraker.conf` disabled API keys, trusted
+`0.0.0.0/0`, and permitted `cors_domains: *`.  The current personal-alpha
+seed makes the first-claim policy explicit: API keys and `force_logins` are
+enabled, while broad trusted-client access remains effective only until a
+normal user exists and broad CORS remains a UI-compatibility setting.
+Moonraker documents trusted clients as full API access and
+reserves a global CORS wildcard for development, not production; here that
+tradeoff is an intentional home-device UX choice, not an authentication claim.
+The web/camera work in AD5M-004 must not silently broaden it.  See Moonraker's
 [authorization configuration](https://moonraker.readthedocs.io/en/stable/configuration/)
 and [authorization API](https://moonraker.readthedocs.io/en/latest/external_api/authorization/).
 
@@ -27,9 +31,10 @@ and [authorization API](https://moonraker.readthedocs.io/en/latest/external_api/
 
 - Specify the supported local-network threat model and which clients may
   control the printer without a login.
-- Replace the universal trusted-client and CORS wildcards with explicit,
-  documented rules that support the selected same-device UI, loopback, and
-  only any intentionally supported external browser origins.
+- Make universal trusted-client and CORS wildcard behaviour an explicit,
+  documented first-claim/home-LAN compatibility decision rather than an
+  accidental inherited default.  After a normal user exists, authentication
+  must not depend on client IP or CORS.
 - Decide whether local users authenticate, how credentials/API keys are
   initialized and rotated, and how an upgrade preserves existing access
   without silently opening control to the LAN.
@@ -68,15 +73,16 @@ This is a candidate design, not an approved configuration or implementation.
    identifies that component for PrusaSlicer derivatives and Cura's OctoPrint
    uploader, while noting that most current slicers speak the native upload
    API.
-3. Use Moonraker user login/JWT for the browser UI, with `force_logins` only
-   after a user exists.  Avoid broad `trusted_clients` as an authentication
-   substitute.  The unsolved prerequisite is a safe first-user/bootstrap flow
-   (for example a one-time pairing secret available through a local console or
-   physical UI); a release must not ship a shared default credential or leave
-   the whole LAN trusted indefinitely.
-4. Allow CORS only for exact supported UI origins such as
-   `http://<device-name>.local`; slicer requests do not need a browser CORS
-   exception.
+3. Use Moonraker user login/JWT for the browser UI, with `force_logins` after
+   a user exists.  The personal/home-LAN first-claim model intentionally lets
+   the first local client create that first user; it is not a cloud or
+   enterprise enrollment product.  The database must make this a one-time
+   transition, so a normal user is required thereafter and an update cannot
+   silently reopen setup.
+4. Treat CORS as browser-UI compatibility rather than authentication.  The
+   personal-alpha first-claim profile may retain a broad compatibility setting
+   while the final UI origin/hostname work is incomplete; slicer requests do
+   not need CORS, and any later narrowing must not break normal home-LAN use.
 5. Treat a narrow, user-selected private-LAN trusted-client range as an
    explicit compatibility profile, not the secure default.  It can help older
    clients that cannot send an API key, but every host in that range receives
@@ -130,12 +136,12 @@ cors_domains:
 
 This permits a browser to use a user login/JWT and a slicer to use the API key
 over direct TCP 7125.  It is not a complete deployment design yet: the first
-normal user cannot be created from an unauthenticated network client, while
-`force_logins` is not effective until that user exists.  A safe bootstrap path
-is now an explicit release gate.  Viable candidates are installer-time
-provisioning, a local-console/SSH command after an explicit credential change,
-or a later physical-screen pairing flow.  Do not open a temporary trusted LAN
-range or ship a shared bootstrap password.
+normal user cannot be created from an untrusted network client, while
+`force_logins` is not effective until that user exists.  The selected product
+policy now deliberately accepts a first-claim LAN setup state for a fresh home
+printer; it is bounded by persistence of the first normal user, not by a
+shared bootstrap password or a claim that an unclaimed device is safe on a
+hostile LAN.
 
 A proxy is consequently optional for steady-state authentication, but can
 provide a safer compatibility boundary if it binds Moonraker to loopback and
@@ -164,11 +170,11 @@ per-printer persistent state.  Migration design must test all of these states:
 3. an existing installation that has the old permissive configuration but no
    normal user.
 
-Case 3 is the dangerous edge case: applying `force_logins: true` with no
-normal user does not activate the protection, yet removing all trusted clients
-at the same time leaves no remote path to create the first user.  The approved
-bootstrap must deliberately handle it without a shared credential, a
-temporary LAN-wide allow-list, or destruction of the persistent database.
+Case 3 is the first-claim edge case: `force_logins: true` does not activate
+until a normal user exists.  The selected home-device profile intentionally
+retains LAN setup access for that state, then relies on the persistent database
+to prevent it from returning after first enrollment.  It must not destroy the
+database or silently reset the device to unclaimed during an update.
 
 The exact CORS origin also cannot be left as a build-time placeholder when the
 printer's persistent hostname is unique.  The implementation must either
@@ -179,22 +185,27 @@ printer origin.
 
 ## Acceptance criteria
 
-- No release variant seeds `trusted_clients: 0.0.0.0/0` or `cors_domains: *`.
+- The shipped first-claim configuration explicitly enables API keys and
+  `force_logins`; its broad LAN first-claim state is documented as accepted
+  only while no normal Moonraker user exists.  Its broad CORS compatibility
+  setting is not mistaken for a steady-state identity mechanism.
 - The approved browser entry point and supported WebSocket/API flow work from
   their documented local origins.
 - Native Moonraker slicer upload with an API key and the retained
   OctoPrint-compatibility upload path are tested independently.
-- The selected first-user bootstrap method is tested so no unauthenticated LAN
-  client can claim a trusted identity with a forwarding header.
+- The selected first-user bootstrap is tested as an explicit first-claim
+  transition: a fresh device accepts setup, while a device with a normal user
+  rejects unauthenticated control even when forwarding headers are supplied.
 - Update-path tests preserve an existing normal user and API key, do not
   recreate the Moonraker database, and cover the legacy no-user state.
-- The browser CORS origin is derived from the final per-device name or avoided
-  with a reviewed same-origin design; no broad `.local` wildcard is added.
+- Browser CORS behaviour is documented as compatibility, not authentication;
+  any later per-device-origin or same-origin design must preserve ordinary
+  home-LAN access rather than introduce a mandatory deployment ceremony.
 - Upgrade does not silently grant new remote control to a previously
   untrusted network client.
 - Security, software-only, and physical-LAN test evidence are distinct.
 
-## Personal-alpha bootstrap constraint (2026-10-28)
+## Personal-alpha first-claim bootstrap (2026-10-28)
 
 Source inspection of the pinned Moonraker authorization component confirms
 that `force_logins` only rejects trusted-client fallback after at least one
@@ -203,78 +214,56 @@ normal user exists.  The first normal user is created through the ordinary
 credential stored in the persistent Moonraker database.  Neither is a safe
 unauthenticated remote bootstrap primitive.
 
-For the personal-alpha profile, the selected direction is therefore:
+For the personal-alpha profile, the selected direction is instead:
 
-1. no remote client may create the first Moonraker user merely by being on the
-   LAN;
-2. bootstrap must begin through verified physical presence (a later UART/local
-   console procedure) or an operator-controlled per-device build input;
-3. only after that operation creates a normal Moonraker user and records
-   credentials in the persistent database may the profile enable the direct
-   slicer API-key route and browser JWT login; and
-4. any temporary local mechanism must be loopback-only, single-use,
-   time-bounded and removed before ordinary LAN listeners are enabled.
+1. a fresh printer may let the first LAN client create the first Moonraker
+   user through the normal UI/API; this ordinary home-device race is accepted;
+2. seed `force_logins: true` and retain the temporary broad trusted-client
+   setup capability only because pinned Moonraker ignores `force_logins` until
+   a normal user exists;
+3. as soon as that user is written to the persistent database, the same
+   configuration automatically requires user JWT or API-key authorization and
+   no longer grants control merely because a client is on the LAN; and
+4. updates and rollback preserve that database and must never delete users or
+   intentionally recreate a first-claim state.  Deliberate recovery/reset is
+   a separate owner operation, not an unattended fallback.
 
-This is a security direction, not an implementation.  The exact local
-bootstrap helper and its interaction with the pinned Moonraker API must be
-tested in an isolated non-printer environment before it changes the seed
-configuration.  A universal trusted range, a shared setup password and a
-"brief" unauthenticated LAN window remain rejected.
+This keeps first setup as easy as opening the printer's page, without a cloud
+account, pairing app, SSH prerequisite or shared default credential.  It does
+not claim protection from a hostile local network during the unclaimed state;
+the first claimant is the owner by product design.  The per-printer SSH
+password remains useful for Linux administration and recovery, but is not the
+Moonraker enrollment authority.
 
-### Proposed practical bootstrap: SSH-authorized loopback setup — 2026-10-28
-
-The project's per-printer root password makes a simple home-LAN first-access
-path possible without turning every LAN client into a Moonraker administrator.
-On a fresh installation, Moonraker should initially bind only to
-`host: 127.0.0.1`, with a loopback-only trusted entry solely for the local
-setup command.  The owner connects through Dropbear using their unique
-per-printer password and runs one documented `ad5m-access-setup` command.  It
-asks for the normal Moonraker username and password, invokes the supported
-local `POST /access/user` API, and only after that succeeds transitions the
-service to its ordinary LAN listener with `force_logins: true` and no
-`trusted_clients` entries.  The owner then uses the browser login and the
-Moonraker API key for a slicer in the normal way.
-
-This is deliberately not a permanent "local-only" product mode: it is a
-one-time, owner-authenticated transition to normal self-hosted LAN operation.
-It does add one SSH command during first setup, but avoids a new account,
-cloud relay, reverse proxy, shared setup secret or fragile browser pairing
-ceremony.  A later physical-screen setup flow may improve that experience,
-but is not required for the first alpha.
-
-The listener boundary is essential.  Inspection of the pinned Moonraker
-source shows that `[server] host` defaults to `0.0.0.0`, while its HTTP server
-always enables Tornado `xheaders=True`.  Consequently, a loopback entry in
-`trusted_clients` is **not** safe while the TCP listener is reachable from the
-LAN: a remote peer may be able to present forwarding headers that alter the
-observed address.  The loopback trust exists only while Moonraker itself is
-bound to loopback; it must be removed before the service is rebound to the
-LAN.  The documented API also confirms that `POST /access/user` is protected,
-so the helper must use the supported API rather than edit Moonraker's database
-directly.
+The `xheaders=True` source fact remains important after enrollment: a
+`trusted_clients` range cannot be treated as a meaningful LAN-security
+boundary on a direct listener.  The steady state must depend on Moonraker
+credentials/API keys, not an IP allow-list.  The exact CORS origin is a UI
+compatibility question, not the ownership proof; resolve the final hostname
+and Mainsail/Fluidd origin port without relying on CORS as authentication.
 
 Before implementation, prove in a disposable rootfs/mock that:
 
-1. fresh loopback-only mode rejects a non-loopback connection and accepts the
-   setup command's local request;
-2. a failed request or a malformed username/password leaves the listener
-   loopback-only and does not create a partial user;
-3. only a successful user creation writes the candidate LAN configuration,
-   removes loopback trust, restarts Moonraker, and leaves a recovery backup;
-4. after transition, password/JWT browser access and API-key slicer access
-   work while an unauthenticated request and forwarded-address spoof attempt
-   fail; and
-5. the existing persistent database keeps a previously provisioned user and
-   API key across an update or rollback without rerunning bootstrap.
-
-The exact generated CORS origin remains a separate prerequisite: the final
-per-printer hostname and the Mainsail/Fluidd origin port must be known before
-the LAN configuration can be considered complete.  Do not paper over that
-with a broad `.local` or `*` wildcard.
+1. a fresh profile permits first-user creation and normal initial UI access;
+2. immediately after a normal user exists, an unauthenticated request and a
+   forwarded-address spoof attempt fail, while JWT browser login and slicer
+   API-key access work;
+3. an existing normal user and API key persist across update/rollback without
+   re-enabling first-claim access; and
+4. an explicit owner recovery/reset procedure is separately documented and
+   cannot run accidentally during boot or update.
 
 ## Verification
 
-Not run.
+2026-10-28: the AD5M seed configuration was changed to explicitly set
+`enable_api_key: true` and `force_logins: true`, retaining the documented
+first-claim trusted-client profile for a fresh device with no normal user and
+the separate broad-CORS compatibility setting.  The integration repository's
+`make validate` passed; its static check rejects a future seed that drops
+either API keys or `force_logins`, or silently changes the first-claim policy.
+This is configuration/source
+evidence only.  No Moonraker process, browser, HTTP client, slicer,
+WebSocket, update transition or printer was run.
 
 ## Hardware verification
 

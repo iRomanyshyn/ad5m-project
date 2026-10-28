@@ -77,10 +77,12 @@ needs an explicit profile rather than an inherited default password policy.
   operator-supplied public key from an ignored build input, or a per-device
   bootstrap password delivered through a local owner-controlled path.  Neither
   public key nor password belongs in Git or in a generic release asset.
-- Before a key and normal Moonraker user exist, do not expose a temporary
-  unauthenticated LAN setup route.  The bootstrap helper, if any, must be
-  invocable only from the verified local path, must create its own bounded
-  state, and must not print a reusable secret into ordinary logs.
+- Moonraker's first-user path is deliberately separate from SSH.  For the
+  consumer/home-LAN first-claim model selected in AD5M-016, the first LAN
+  client may establish the initial Moonraker owner; that does not grant it the
+  per-printer root password or SSH access.  Once a normal Moonraker user
+  exists, the persistent database must ensure this open first-claim state does
+  not silently return on reboot, update or rollback.
 - Retain the existing persistent SSH/Moonraker paths deliberately, with
   documented permissions and backup/redaction rules.  Rotation/revocation
   must require local owner authorization and must not silently delete working
