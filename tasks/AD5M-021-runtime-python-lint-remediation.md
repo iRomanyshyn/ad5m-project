@@ -88,3 +88,22 @@ The next increment must be selected rule-by-rule with per-module tests and a
 documented reason.  In particular, do not enable broad `F`/`E`/`B`/`S`/`UP`
 families or run `ruff --fix` across power-loss recovery or timelapse merely to
 reduce the count.
+
+### 2026-10-28 source classification before further linting
+
+The four files covered by the narrow gate are not a homogeneous
+project-authored codebase.  Their current provenance classification is:
+
+| Local module | Classification and fixed evidence | Lint/change boundary |
+| --- | --- | --- |
+| `klipper_extensions/gcode_shell_command.py` | Third-party-derived.  Its blob ID is identical to KIAUH commit `0ee0fa332509d11b3e5f98066f377eebc7f376b0` at `resources/gcode_shell_command.py`; the historical import commit `1e27a0212fec679e5712365ef1af523b8dcd476f` names that source.  The matched file carries Eric Callahan's GPLv3 header. | Treat command parsing and process behavior as compatibility-sensitive.  No lint-driven rewrite without focused command/error tests and an explicit security review. |
+| `klipper_extensions/md5_checker.py` | Historical external contribution with incomplete upstream provenance.  The first local appearance is `b4d6e7ad1d153368e49c9f025f2cbe65330915c1`, authored by `minicx` in the inherited integration history; its GPLv3 header identifies the same author.  No independent original repository or release revision was established by this audit. | Do not call it project-authored merely because it is first seen in local history.  Establish an original-source/license record and add file-integrity behavior tests before any nontrivial lint change. |
+| `klipper_extensions/power_loss_recovery.py` | Third-party-derived.  Its blob ID is identical to `ankurv2k6/klipper-plr` commit `c934099084a3c9b819cc8c638e71e41442d63f20` at `power_loss_recovery.py`; the inherited introduction explicitly names that project.  The source repository declares GPL-3.0 and the file has Ankur Verma's GPLv3 header. | Safety-sensitive print-recovery logic: linting may not change control flow, exception behavior, paths or G-code handling without a dedicated test plan and physical-review requirements. |
+| `moonraker_extensions/timelapse.py` | Upstream-derived.  Immediately before the project's F401-only import removal, its blob ID matched `mainsail-crew/moonraker-timelapse` commit `3e1fa830748e20db4458a30c0a677efcaf45b3ac` at `component/timelapse.py`.  The local copy was already this older 2023 source when it was moved into the integration tree; current upstream status is not an update instruction.  The matched file carries Christoph Frei's GPLv3 header. | Keep it frozen absent focused Moonraker/camera/FFmpeg workflow tests.  The one local F401 change only removes a type-checking import and does not establish parity with a newer upstream. |
+
+For the three independently cloned source histories, `git fsck --no-dangling`
+passed.  Blob equality proves the identified file content at those revisions;
+it does not authenticate authorship, audit each repository's full dependency
+closure, establish behavior on the AD5M, or authorize bulk import/update.
+The external commits were retained as provenance identifiers, not as mutable
+branch names or automatic update sources.
