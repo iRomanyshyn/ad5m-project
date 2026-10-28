@@ -106,3 +106,37 @@ target dependency/license manifest.  Then render a representative timelapse
 and test the USB MJPEG camera on hardware.  A release still needs a reviewed
 source-offer, notices and licensing process for FFmpeg, x264 and all project
 modifications.
+
+### Packaging and optional-media direction — 2026-10-28
+
+Read-only inspection of the existing local target artifact shows that the
+configured `/usr/bin/ffmpeg` is a stripped ARM executable of 296,452 bytes.
+Its selected `libav*`, `libsw*` and `libx264` files occupy about 4.2 MiB in
+that target tree; this is a useful sizing observation, not a measured clean
+image delta because some shared libraries may also serve other packages.
+
+FFmpeg is **not** required for the USB camera's live MJPEG stream: that path
+is ustreamer/V4L2.  The project-owned timelapse component checks for
+`/usr/bin/ffmpeg`; when absent it disables automatic rendering and reports a
+render error instead of trying to fetch software.  When present, it invokes a
+constrained local command to turn saved JPEG frames into an MP4 with
+`libx264`.  Existing documentation also warns that rendering or other heavy
+background work while printing can cause print failure on the constrained
+AD5M.
+
+Selected direction for the personal alpha: retain the reviewed, constrained
+FFmpeg profile in the built image while timelapse rendering remains a
+supported feature.  The printer must never self-download FFmpeg or any other
+executable at runtime: that would bypass source provenance, package integrity,
+rollback and storage-budget controls.  Nor should it execute an arbitrary
+binary copied from USB.
+
+If the 4 MiB-class media footprint later proves undesirable, offer a distinct
+optional **media/timelapse add-on** through the project's normal update
+mechanism.  It must be an exact AD5M artifact with a manifest, compatible
+component versions, integrity/authenticity verification, atomic
+install/rollback and a resource policy that prevents rendering during a
+print.  Offline USB delivery may carry that same verified project artifact;
+USB is a transport, not an authority to run whatever executable it contains.
+This option is deferred until AD5M-019/025/027 provide the required update
+and recovery contracts.
