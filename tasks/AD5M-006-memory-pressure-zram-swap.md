@@ -304,3 +304,4 @@ Not run.
 6. Only after those baselines, assess an explicitly provisioned internally
    mounted USB-storage profile against its mechanical, power, privacy and
    disconnect-recovery criteria; it remains user-enabled rather than default.
+   AD5M-024 must first establish the actual USB topology and power evidence.

@@ -100,6 +100,9 @@ legacy submodule dependency.
 - evaluate zram first, then internal-flash or USB-backed swap only if justified
   by measurements and failure-mode testing; see
   `tasks/AD5M-006-memory-pressure-zram-swap.md`
+- establish the actual display, camera and USB topology before using a board
+  header or internal storage; see
+  `tasks/AD5M-024-ad5m-display-camera-usb-topology.md`
 - service startup optimization
 
 ## Security
