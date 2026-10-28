@@ -73,5 +73,7 @@ AD5M-026 recovery evidence.
    atomic selector and independently journaled health-check/rollback state.
 2. Split MCU flashing from candidate boot/health checks; no candidate may
    flash an MCU merely to prove application health.
-3. Add a signed manifest and artifact inventory, eliminate arbitrary overlay
-   copy, and test interruption/storage-failure cases under AD5M-019.
+3. Add a signed manifest and artifact inventory, and test
+   interruption/storage-failure cases under AD5M-019. The legacy arbitrary
+   USB-root overlay was removed under AD5M-025; its removal is a source-only
+   guard, not update authentication.

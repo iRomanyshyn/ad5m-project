@@ -30,8 +30,11 @@ software update authority.
 - Remove the `klipper_mod_debug` / `mod_debug.sh` host-init path.
 - Do not mount removable media writable or copy diagnostics merely because a
   marker is present.
+- Remove the installer-time chroot USB-root overlay; the selected packaged
+  chroot is the only setup payload until a signed, reviewed recovery/update
+  format exists.
 - Keep a static negative test that rejects this exact class of host-init
-  execution.
+  execution or root-overlay regression.
 
 The existing `klipper_mod_skip`, `klipper_mod_remove` and stock-vendor-update
 markers are deliberately unchanged by this narrow remediation.  That preserves
@@ -49,7 +52,7 @@ does not establish what the closed stock host does after its own update handoff.
 | Host `S00klipper_mod` | Before chroot startup it scans `/dev/sda`/`sdb`, partitions 1–4 and raw devices, mounting VFAT read-only. `klipper_mod_skip` restores stock MCU firmware and skips the chroot; `klipper_mod_remove` also removes the mod. An `Adventurer*.tgz` or `flashforge_init.sh` name makes it defer to the stock boot/update flow. | No USB-provided script is executed after the immediate remediation, but filename-only skip/remove remains an unauthenticated availability/destructive control. The broad vendor-update detection is a handoff, not project verification; redesign under this task and AD5M-019. |
 | Runtime `automount.sh` via mdev | `sd[a-z].*` hot-plug events mount VFAT read-only under `/media/<MDEV>` and replace the `gcodes/usb` symlink. | Merely inserting media does not execute its contents. Selecting an imported G-code file is a separate printing-trust action; identity, multi-device behavior and any persistent/internal mount remain AD5M-024 work. |
 | Project install archive | The stock update mechanism runs the archive's `flashforge_init.sh` as a privileged installer. It deletes the active chroot before space checking and unpacks the supplied root filesystem. | An install archive is already a privileged external-code channel. It has no manifest/signature verification and cannot be a project update mechanism; AD5M-019 owns its replacement. |
-| `klipper_mod` installer overlay | During initial setup, `install_steps.sh` copies `/media/klipper_mod/*` into `/` in the new chroot. | It does not directly invoke an overlay script at copy time, but an overlay can replace services/configuration and thereby become code or privilege-changing content at boot. Retire or confine this feature in the signed release/recovery design of AD5M-019. |
+| Former `klipper_mod` installer overlay | Before 2026-10-28, `S00klipper_mod setup()` bind-mounted host `/mnt` into chroot `/media`, and `install_steps.sh` copied `/media/klipper_mod/*` into `/`. | Removed. The base installer no longer passes the USB medium into the chroot or applies an arbitrary root overlay. A future signed recovery/update format remains AD5M-019 work. |
 | Install/uninstall logs | The privileged installer/uninstaller redirects logs to `/mnt` if the vendor has mounted a matching USB device there. | This is a diagnostic data-export path, not code execution, but logs may contain sensitive details. A future explicit export flow must redact secrets and identify its destination as required above. |
 
 No project-controlled USB path was found that automatically sources or
@@ -113,6 +116,16 @@ emulator or target code execution was performed.
 
 Not run.  The remediation removes a host-init branch but does not establish
 behavior on stock firmware, all USB devices or a future recovery release.
+
+### 2026-10-28 installer-overlay removal
+
+The project removed the `S00klipper_mod setup()` bind mount of stock-host
+`/mnt` into chroot `/media` and the chroot `install_steps.sh` copy of
+`/media/klipper_mod/*` into `/`. The installer archive remains the selected
+stock-host input, but it no longer grants an additional arbitrary USB-root
+overlay inside the extracted chroot. `make validate` now rejects restoration
+of either half of this path. This is source-only verification; no installer,
+USB device or printer was run.
 
 ## Remaining work
 
