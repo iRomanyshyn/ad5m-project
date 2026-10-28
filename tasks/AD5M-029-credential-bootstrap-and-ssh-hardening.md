@@ -1,6 +1,6 @@
 # AD5M-029 Credential bootstrap and SSH hardening
 
-Status: proposed
+Status: in progress
 
 ## Goal
 
@@ -42,10 +42,56 @@ browser authorization.
   password.
 - Changing motion, heater, MCU or update logic.
 
+## Source constraints and alpha design (2026-10-28)
+
+The current base configuration explicitly supplies `root:klipper` and enables
+Dropbear.  The installer persists `/etc/dropbear`, `/root/.ssh` and the
+Moonraker database below the per-printer static-data boundary.  This makes
+host keys, authorized keys, normal Moonraker users and its system API key
+durable across a chroot replacement, but it does not make the initial state
+safe.
+
+The pinned Moonraker source confirms that the first normal user is created by
+its normal user API and that `force_logins` takes effect only once such a user
+exists.  Therefore neither an empty database nor the system API key can be
+treated as a first-owner proof.  The current generic Dropbear init script also
+starts a network daemon before the existing Klipper/Moonraker services; it
+needs an explicit profile rather than an inherited default password policy.
+
+### Selected direction for the personal alpha
+
+- Ship no root password and no packaged private key.  Remote administration is
+  key-only after bootstrap; a release profile must explicitly verify the
+  selected Dropbear password/root-login semantics rather than rely on defaults.
+- The initial owner establishes access only through either a verified local
+  console procedure (expected to be UART in the later physical session) or a
+  per-device, operator-supplied public key consumed from a local ignored build
+  input.  The latter is permitted for the owner's personal alpha only; it must
+  never become a committed release asset or a public installation convention.
+- Before a key and normal Moonraker user exist, do not expose a temporary
+  unauthenticated LAN setup route.  The bootstrap helper, if any, must be
+  invocable only from the verified local path, must create its own bounded
+  state, and must not print a reusable secret into ordinary logs.
+- Retain the existing persistent SSH/Moonraker paths deliberately, with
+  documented permissions and backup/redaction rules.  Rotation/revocation
+  must require local owner authorization and must not silently delete working
+  keys or users during update/rollback.
+
+### Open implementation proof
+
+Before modifying the image, verify against the pinned Buildroot/Dropbear and
+Moonraker sources that the selected configuration: locks password access while
+allowing the intended key path, starts no public listener before bootstrap,
+creates the first Moonraker user without direct database edits, and remains
+recoverable after a failed bootstrap.  Exercise this on a disposable
+non-printer rootfs/mock before the AD5M.  The actual console capability and
+local ownership ceremony are P4 hardware evidence under AD5M-031/026.
+
 ## Verification
 
-Not run.  AD5M-028 source inspection only established the current shared
-credential; no authentication behavior was changed or tested.
+2026-10-28: source-only inspection established the current root-password,
+Dropbear and persistent-state boundaries, and the pinned Moonraker first-user
+constraint.  No authentication behavior was changed or tested.
 
 ## Hardware verification
 

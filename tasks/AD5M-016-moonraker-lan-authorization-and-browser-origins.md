@@ -1,6 +1,6 @@
 # AD5M-016 Moonraker LAN authorization and browser origins
 
-Status: proposed
+Status: in progress
 
 ## Goal
 
@@ -193,6 +193,33 @@ printer origin.
 - Upgrade does not silently grant new remote control to a previously
   untrusted network client.
 - Security, software-only, and physical-LAN test evidence are distinct.
+
+## Personal-alpha bootstrap constraint (2026-10-28)
+
+Source inspection of the pinned Moonraker authorization component confirms
+that `force_logins` only rejects trusted-client fallback after at least one
+normal user exists.  The first normal user is created through the ordinary
+`POST /access/user` flow, and the system API key is a shared device-wide
+credential stored in the persistent Moonraker database.  Neither is a safe
+unauthenticated remote bootstrap primitive.
+
+For the personal-alpha profile, the selected direction is therefore:
+
+1. no remote client may create the first Moonraker user merely by being on the
+   LAN;
+2. bootstrap must begin through verified physical presence (a later UART/local
+   console procedure) or an operator-controlled per-device build input;
+3. only after that operation creates a normal Moonraker user and records
+   credentials in the persistent database may the profile enable the direct
+   slicer API-key route and browser JWT login; and
+4. any temporary local mechanism must be loopback-only, single-use,
+   time-bounded and removed before ordinary LAN listeners are enabled.
+
+This is a security direction, not an implementation.  The exact local
+bootstrap helper and its interaction with the pinned Moonraker API must be
+tested in an isolated non-printer environment before it changes the seed
+configuration.  A universal trusted range, a shared setup password and a
+"brief" unauthenticated LAN window remain rejected.
 
 ## Verification
 

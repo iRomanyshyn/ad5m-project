@@ -1,6 +1,6 @@
 # AD5M-028 Phase-zero provenance and privileged-path audit
 
-Status: in progress
+Status: complete
 
 ## Goal
 
@@ -97,7 +97,7 @@ static observations, not evidence of runtime behavior or malicious intent.
 | blocker | `build_scripts/buildroot/configs/base` sets `BR2_TARGET_GENERIC_ROOT_PASSWD="klipper"`; the legacy README publishes `root` / `klipper`. | The shared credential is present in the image configuration, not merely stale prose. It is incompatible with a distributable LAN-accessible release. | AD5M-029 with AD5M-016. |
 | high | `package/klipper/klipper.mk` fetches pinned commit `fc2aaae…` from `https://github.com/xblax/klipper.git` and builds mainboard/eboard MCU artifacts; local patches include timing behavior (`0003-Relax-MCU-TRSYNC_TIMEOUT-for-ffad5m.patch`). | Exact Git pin improves repeatability but does not establish fork provenance, patch delta, license/source equivalence, or safety behavior. Do not replace it with an upstream commit without a compatibility/safety audit. | AD5M-030. |
 | high | `install_steps.sh` copies `/media/klipper_mod/*` into `/`, then calls automatic `S54mcu_update`; host installer invokes it with privileged mounts/chroot. | The existing installer is an explicit privileged USB code/content channel. AD5M-027 preflights archive/space only; it does not authenticate contents, isolate an overlay, stage a candidate, or separate MCU flashing. | AD5M-019, AD5M-025, AD5M-027. |
-| high | `S54mcu_update` automatically flashes MCUs on version mismatch; `mcu_update.sh` delegates to stock `NationsCommand` and `IAPCommand`; `S55mcu_boot` resets/boots MCU serial paths. | Safety-critical and host-dependent; no target/hardware test was run. | AD5M-019 and AD5M-026; a focused patch audit is still required. |
+| high | `S54mcu_update` automatically flashes MCUs on version mismatch; `mcu_update.sh` delegates to stock `NationsCommand` and `IAPCommand`; `S55mcu_boot` resets/boots MCU serial paths. | Safety-critical and host-dependent; no target/hardware test was run.  The later source pass also found incomplete parallel-flash result accounting. | AD5M-019, AD5M-026 and AD5M-034; a focused patch audit is still required. |
 | high | Moonraker config documents default bind `0.0.0.0:7125`; root services start HTTP on 4000/4001 and camera streaming on 8080. | Browser/API authorization and bootstrap remain proposed; listener presence is not proof of an exploit. | AD5M-004 and AD5M-016. |
 | high | `S45ntpd` starts `ntpd -p pool.ntp.org`. | This is declared external egress outside the incomplete HelixScreen local-only profile. Time sync may be useful, but its release policy, failure behavior and privacy implications are not recorded. | New egress-policy decision or expansion of AD5M-018 required. |
 | tracked | `S00klipper_mod`, mdev camera/storage handlers, installer/uninstaller and recovery marker paths execute as root or influence root boot. | AD5M-025 removed USB debug-script execution and inventories these paths; marker/recovery redesign remains incomplete. | AD5M-025. |
@@ -121,3 +121,27 @@ static observations, not evidence of runtime behavior or malicious intent.
 This map is an inventory, not an assertion that every entry point has a
 defect.  The next audit pass must add exact code origins/licenses and patch
 deltas, then turn only confirmed release gates into separately approved tasks.
+
+## Completion pass (2026-10-28)
+
+The completed source-only pass inspected project heads
+`ad5m-project` `1c18e71c9ba366a4e3e436fafdbced8bab4eecd3`,
+`ad5m_enhanced_mod` `85ff97d59a484115a37c63b5831f79a3698773d8`, and
+canonical Buildroot `77fb3a9ec7cd1e27910a441e0d75df0cbe51c2de`.  Searches
+were limited to tracked source files; no installer, target binary, build
+output or printer was executed.
+
+| Rank | Evidence | Current control / limitation | Owner |
+| --- | --- | --- | --- |
+| high | `build_overlays/common/etc/init.d/S45ntpd` unconditionally starts BusyBox `ntpd` against `pool.ntp.org`. | It is an independent runtime egress path, not HelixScreen telemetry.  The project has not yet chosen whether time sync is off by default, locally configurable, or supplied by a local network source. | AD5M-032. |
+| high | `build_overlays/common/lib/modules/cbc.ko` and `md4.ko` are tracked ARM relocatable kernel modules.  The inspected tree contains no adjacent module source, build recipe, license file or digest/provenance record. | Their current SHA-256 identities are `63e6f2f…0e337d` and `aad8913…bc156`, respectively.  Presence is not proof of malicious behavior, but opaque kernel code cannot be accepted into a release without provenance or a deliberate removal decision. | AD5M-033. |
+| tracked | Mainsail has neither a package license declaration nor an adjacent archive hash; Git packages (Klipper, Moonraker, Klippain-ShakeTune and backlight) pin commits but do not retain a source-archive digest. | Existing AD5M-008 closure verifies selected Python and Fluidd/archive inputs.  The remaining package/release manifest inventory is a reproducibility and supply-chain gap, not a reason to replace sources wholesale. | AD5M-008 / AD5M-019 / AD5M-030. |
+| tracked | `printer_configs/moonraker.conf` actively enables `0.0.0.0/0` trusted clients, wildcard CORS and disabled API keys; `S70mainsail`, `S70fluidd` and camera service expose HTTP listeners. | This confirms the configuration is an actual release input rather than obsolete documentation.  It remains a release blocker under the independently scoped authorization/bootstrap work. | AD5M-016 / AD5M-029. |
+| informational | Package-local patches are small and named: Klipper C-helper build check/version fallback/TRSYNC timeout, Moonraker runtime-pip disablement, and ShakeTune path relocation. | Patch size or commit metadata is not a safety conclusion.  Their exact behavior and the fork delta remain AD5M-030's evidence-backed audit. | AD5M-030. |
+
+The audit's deliverable is now complete: all confirmed source-level findings
+have an owner, and no behavior was modified merely from static inspection.
+AD5M-031 orders the resulting non-hardware work and physical sessions.  This
+does **not** lift the release/install gate: the shared credential, unreviewed
+MCU-producing Klipper source, destructive update path and unproven recovery
+still prevent an installable/distributable claim.

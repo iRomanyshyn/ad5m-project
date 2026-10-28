@@ -33,6 +33,9 @@ legacy submodule dependency.
   exhaustion, interrupted updates, MCU loss, and network loss
 - define a hardware test matrix that keeps software validation distinct from
   physical-printer validation
+- in progress: close the non-hardware personal-alpha readiness plan before
+  any target installation; see
+  `tasks/AD5M-031-pre-hardware-readiness-and-personal-alpha-plan.md`
 
 ## Reliability
 
@@ -46,6 +49,9 @@ legacy submodule dependency.
   `tasks/AD5M-027-installer-preflight-before-destruction.md`
 - rollback/recovery
 - MCU update recovery
+- proposed: make legacy MCU update success/failure accounting explicit before
+  relying on any recovery marker; see
+  `tasks/AD5M-034-mcu-update-result-accounting.md`
 - proposed: establish a board-revision-specific recovery and reflashing
   capability before the first project firmware installation; see
   `tasks/AD5M-026-recovery-and-reflashing-readiness.md`
@@ -119,6 +125,9 @@ legacy submodule dependency.
 - proposed: replace the shared root password with a per-printer, recoverable
   bootstrap flow before release; see
   `tasks/AD5M-029-credential-bootstrap-and-ssh-hardening.md`
+- proposed: define all system egress, including NTP, independently of the
+  HelixScreen local-only profile; see
+  `tasks/AD5M-032-system-network-egress-policy.md`
 - remove automatic privileged execution of code supplied on removable media
   and define an explicit, verifiable recovery-media trust boundary; see
   `tasks/AD5M-025-removable-media-host-trust-boundary.md`
@@ -140,6 +149,8 @@ legacy submodule dependency.
 - proposed: audit the pinned Klipper fork and all local safety-affecting
   patches before treating its generated MCU firmware as releaseable; see
   `tasks/AD5M-030-klipper-source-and-safety-patch-audit.md`
+- proposed: account for or eliminate tracked binary kernel modules without
+  source provenance; see `tasks/AD5M-033-binary-kernel-module-provenance.md`
 - diagnostics export
 - establish a layered test strategy: static checks, Klipper regression and
   batch G-code tests, mocked Klipper/Moonraker API scenarios, generic QEMU
