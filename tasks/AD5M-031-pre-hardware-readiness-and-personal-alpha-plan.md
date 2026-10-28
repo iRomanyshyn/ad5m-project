@@ -53,10 +53,13 @@ installable on the user's printer:
 4. Every enabled external network path has an explicit policy; local-only UI
    claims exclude hidden upstream update/crash/telemetry transport
    (AD5M-018, AD5M-023 and AD5M-032).
-5. A clean build and static validation produce a recorded component/asset
+5. Every shipped kernel module has source/config provenance and a reviewed
+   disposition; an opaque legacy blob cannot silently become part of the
+   alpha baseline (AD5M-033).
+6. A clean build and static validation produce a recorded component/asset
    inventory tied to the exact three-repository revisions.  A dirty local
    `build_output/` directory is not release evidence.
-6. The owner has an official compatible stock USB image, a tested console
+7. The owner has an official compatible stock USB image, a tested console
    capture setup and a written stop condition.  No physical action proceeds
    when the printer is printing, hot, or is the only unverified recovery path.
 
