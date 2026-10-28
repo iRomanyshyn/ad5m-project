@@ -1,6 +1,6 @@
 # AD5M-021 Runtime Python lint remediation
 
-Status: proposed
+Status: in progress
 
 ## Goal
 
@@ -48,5 +48,43 @@ patterns, and suggested transformations that could change runtime behaviour.
 
 ## Verification
 
-Software-only until focused runtime tests and any required hardware checks are
-recorded with individual changes.
+2026-10-28 software-only checks passed:
+
+- `make -C ad5m_enhanced_mod lint`
+- `make -C ad5m_enhanced_mod lint-ruff`
+
+The Ruff command uses an ephemeral cache and checks no target artifacts.  It
+does not run a Klipper, Moonraker, camera, FFmpeg or printer workflow.
+
+## Implementation notes
+
+### 2026-10-28 narrow host-only initial gate
+
+The active runtime Python surface is four GPLv3-headered modules.  Their
+headers identify `gcode_shell_command.py` with Eric Callahan, `md5_checker.py`
+with minicx, `power_loss_recovery.py` with Ankur Verma, and `timelapse.py`
+with Christoph Frei.  The local history shows that the shell-command and
+timelapse modules entered through the inherited integration history, while
+the MD5 checker and power-loss recovery have single historical introduction
+commits.  This is copyright/arrival evidence, not a completed source-revision
+closure audit; before behavior changes each module still needs a separately
+recorded upstream or author-source identity.
+
+Ruff `0.17.0` is now pinned in `requirements-dev.txt` and required by
+`ruff.toml`; the target baseline is the pinned Buildroot Python 3.12 series.
+`make lint-ruff` is deliberately opt-in and never installs a package, writes
+inside the checkout, or becomes a target-image dependency.  The existing
+portable `make lint` and `make validate` remain usable on a host without Ruff.
+
+The initial policy selects only `F401` (unused imports) for exactly the four
+runtime modules.  That is intentionally smaller than the 253-finding
+diagnostic full scan: it excludes formatting, exception handling, logging,
+typing modernization and suggested code transformations until focused tests
+cover each behavior-sensitive module.  The sole current finding was an unused
+type-checking-only `WebCam` import in the timelapse extension; removing that
+name cannot change runtime imports or the timelapse command path.
+
+The next increment must be selected rule-by-rule with per-module tests and a
+documented reason.  In particular, do not enable broad `F`/`E`/`B`/`S`/`UP`
+families or run `ruff --fix` across power-loss recovery or timelapse merely to
+reduce the count.
