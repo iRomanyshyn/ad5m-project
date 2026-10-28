@@ -78,6 +78,38 @@ installable on the user's printer:
    voltage, unlabelled connector, non-stock boot behavior, lost console, or
    any uncertainty about the next write operation.
 
+## Non-hardware closure checkpoint
+
+Planning is considered sufficiently closed to begin a dedicated hardware
+session only when the following record exists.  This is deliberately a
+checkpoint, not a claim that the project is ready to install:
+
+| Area | Required non-hardware outcome | Current direction |
+| --- | --- | --- |
+| Privileged/update controls | Authenticated release/update design, removable-media boundary and explicit non-automatic MCU-operation contract | AD5M-019, AD5M-025, AD5M-027 and AD5M-034 define the direction; implementation/fault injection remains. |
+| Identity and LAN access | Per-printer credential/bootstrap and hostname/CORS plan that does not need a LAN-wide exception | AD5M-016, AD5M-017 and AD5M-029; a disposable non-printer validation is still required. |
+| External network | Complete boot/scheduled egress inventory and offline-by-default policy | AD5M-032 records the first profile; implement/test removal of the public NTP default before alpha. |
+| Runtime provenance | Reviewed disposition for Klipper deltas, local patches and every binary module | AD5M-030/035 have a concrete immediate safety fix; AD5M-033 remains blocked on vendor kernel source/config provenance. |
+| UI selection | A local-only HelixScreen candidate with reviewed dependency/source closure, or a documented upstream-blocked disposition | Current official candidate is rejected for the local-only package under AD5M-018/023; do not bypass that by packaging it. |
+| Artifact evidence | Clean build, manifest/SBOM-style component inventory and static/fault-injection validation | P2 work; ignored `build_output/` cannot satisfy it. |
+
+Once this checkpoint has been reviewed, stop expanding architecture speculatively
+and move to the smallest P2 changes with deterministic host-side tests.  Do
+not wait for every ideal public-release feature: the first hardware session is
+instead gated by the independent recovery and read-only discovery checklist
+below.
+
+## Hardware-session boundary
+
+The first dedicated printer session has a narrow purpose: P3 bench validation
+and P4 read-only discovery.  It is **not** an install attempt.  Its entry
+record must name the exact stock software version, official recovery image
+hash, chosen 3.3 V console adapter, console capture destination, expected
+connector/pin evidence, and stop conditions.  It may collect observations;
+it must not flash an MCU, invoke FEL write, modify persistent storage, install
+the project archive, or use a guessed connector.  AD5M-024 and AD5M-026 own
+that evidence and may turn it into a separately reviewed installation plan.
+
 ## Explicit deferrals
 
 - HelixScreen packaging/UI layout, telemetry contribution, mDNS, camera URL
