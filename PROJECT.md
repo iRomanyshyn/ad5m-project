@@ -195,6 +195,7 @@ Areas currently planned or under investigation include:
 - G-code upload integrity
 - Buildroot maintenance
 - resource management
+- optional media jobs with a print-admission interlock
 - Moonraker/network security
 - diagnostics
 - CI and automated validation

@@ -148,4 +148,5 @@ and a resource policy that prohibits capture/rendering during an active print.
 The printer must never self-download an executable or run an arbitrary binary
 from USB; offline USB delivery may carry only that same verified project
 artifact. This option remains gated on AD5M-019/025/027 update and recovery
-contracts plus focused hardware validation.
+contracts, AD5M-036's print-admission interlock, and focused hardware
+validation.
