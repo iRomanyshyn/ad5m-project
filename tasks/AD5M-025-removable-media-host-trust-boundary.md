@@ -39,6 +39,24 @@ their current recovery behavior but is **not** an endorsement of their trust
 model: marker-triggered skip/remove can affect boot availability and must be
 redesigned before a project release can rely on them.
 
+## Current USB-path inventory (2026-10-28)
+
+The following is a source-only inventory of project-controlled paths.  It
+does not establish what the closed stock host does after its own update handoff.
+
+| Path | Current trigger and authority | Security consequence / owner |
+| --- | --- | --- |
+| Host `S00klipper_mod` | Before chroot startup it scans `/dev/sda`/`sdb`, partitions 1–4 and raw devices, mounting VFAT read-only. `klipper_mod_skip` restores stock MCU firmware and skips the chroot; `klipper_mod_remove` also removes the mod. An `Adventurer*.tgz` or `flashforge_init.sh` name makes it defer to the stock boot/update flow. | No USB-provided script is executed after the immediate remediation, but filename-only skip/remove remains an unauthenticated availability/destructive control. The broad vendor-update detection is a handoff, not project verification; redesign under this task and AD5M-019. |
+| Runtime `automount.sh` via mdev | `sd[a-z].*` hot-plug events mount VFAT read-only under `/media/<MDEV>` and replace the `gcodes/usb` symlink. | Merely inserting media does not execute its contents. Selecting an imported G-code file is a separate printing-trust action; identity, multi-device behavior and any persistent/internal mount remain AD5M-024 work. |
+| Project install archive | The stock update mechanism runs the archive's `flashforge_init.sh` as a privileged installer. It deletes the active chroot before space checking and unpacks the supplied root filesystem. | An install archive is already a privileged external-code channel. It has no manifest/signature verification and cannot be a project update mechanism; AD5M-019 owns its replacement. |
+| `klipper_mod` installer overlay | During initial setup, `install_steps.sh` copies `/media/klipper_mod/*` into `/` in the new chroot. | It does not directly invoke an overlay script at copy time, but an overlay can replace services/configuration and thereby become code or privilege-changing content at boot. Retire or confine this feature in the signed release/recovery design of AD5M-019. |
+| Install/uninstall logs | The privileged installer/uninstaller redirects logs to `/mnt` if the vendor has mounted a matching USB device there. | This is a diagnostic data-export path, not code execution, but logs may contain sensitive details. A future explicit export flow must redact secrets and identify its destination as required above. |
+
+No project-controlled USB path was found that automatically sources or
+executes a file from `/media` or `/mnt` after the removed debug path.  That is
+not evidence that the vendor's opaque update dispatcher verifies arbitrary
+archives, nor that the current installer is safe to use as a release updater.
+
 ## Repositories affected
 
 - ad5m-project
@@ -81,9 +99,10 @@ redesigned before a project release can rely on them.
 ## Verification
 
 Software-only validation must confirm that the production host init script
-contains no `klipper_mod_debug`, `mod_debug.sh` or `/bin/sh /mnt/...` execution
-pattern, and that a deliberately unsafe fixture is rejected.  It must also
-run shell syntax checks through the project static-validation target.
+contains no `klipper_mod_debug`, `mod_debug.sh`, shell execution or shell
+sourcing from `/mnt` or `/media`, and that a deliberately unsafe fixture is
+rejected.  It must also run shell syntax checks through the project
+static-validation target.
 
 2026-10-28: `make validate` in `ad5m_enhanced_mod` passed after the immediate
 remediation.  It ran host lint, the production-policy check, its unsafe
@@ -98,7 +117,9 @@ behavior on stock firmware, all USB devices or a future recovery release.
 ## Remaining work
 
 1. Inventory every host-side and chroot-side path that reacts to a USB marker,
-   archive, label or mount event, including the vendor update handoff.
+   archive, label or mount event, including the vendor update handoff.  The
+   project-controlled baseline above is complete only for the checked source;
+   validate it against stock-host behavior before design decisions.
 2. Decide whether skip/remove survive, and if so define a local, authenticated
    recovery state machine that cannot be activated by arbitrary inserted media.
 3. Design a separately authorized diagnostic-export UX and a signed,
