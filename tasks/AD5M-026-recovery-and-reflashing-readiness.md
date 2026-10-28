@@ -31,6 +31,22 @@ ST-LINK/J-Link-class SWD probe could be a last-resort programming/debug tool
 only after the actual SWD pads, voltage level and target ownership are
 verified.  It is not appropriate to attach a probe based on MCU family alone.
 
+### Available-equipment inventory (user report, 2026-10-28)
+
+| Equipment | Best AD5M role | Status / constraint |
+| --- | --- | --- |
+| Waveshare FTDI USB-to-TTL | Primary host UART console. | Appropriate after its I/O level is explicitly set to 3.3 V. Connect only GND, crossed TX/RX; leave VCC disconnected. The cited Waveshare FT232 variant supports a 3.3/5 V switch, but the setting must be checked on the actual unit. |
+| WeAct Studio Mini Debugger (ST-LINK/V2.1) | Candidate SWD probe for a physically verified STM32 target. | Its project documents ST-Link/DAPLink firmware. Do not assume its exposed connector is a ready USB-UART until a bench loopback proves the installed firmware and pins. |
+| Waveshare RP2350-GEEK | Backup USB-UART and CMSIS-DAP/SWD probe. | Waveshare documents 3-pin UART and CMSIS-DAP SWD, selected by firmware. Load/identify the Debug Probe firmware and perform a loopback before relying on it. |
+| Raspberry Pi 4 / 3B | Spare 3.3 V UART-console host or development machine. | Suitable with a configured GPIO UART, but less convenient than the FTDI for first diagnosis. GPIO is not 5 V tolerant. |
+| Android with USB-C OTG | Emergency terminal host for a known-working USB-UART adapter. | Convenience fallback only; driver/application behavior must not be the sole recovery plan. |
+| Other RP2350/ESP boards | Custom tooling reserve. | Out of scope until the basic FTDI UART and recovery path are proven. |
+
+No dedicated SPI/eMMC programmer or board-specific test clip is currently in
+the reported kit.  That is not yet a purchase requirement: first identify the
+actual storage, recovery interfaces and failure modes.  A generic clip or
+programmer cannot safely be selected without that evidence.
+
 ## Repositories affected
 
 - ad5m-project
@@ -76,6 +92,10 @@ verified.  It is not appropriate to attach a probe based on MCU family alone.
 - [Allwinner T113-S3 User Manual, BROM/FEL section](https://raspipcb.com/wp-content/uploads/2025/03/allwinner-t113-user-manual.pdf)
 - [sunxi-fel manual](https://github.com/linux-sunxi/sunxi-tools/blob/master/sunxi-fel.1)
 - [ST hardware debugger/programmer documentation](https://www.st.com/en/development-tools/hardware-debugger-and-programmer-tools-for-stm32/documentation.html)
+- [Waveshare FT232 USB-to-TTL specifications](https://www.waveshare.com/usb-to-ttl-c.htm)
+- [Waveshare RP2350-GEEK documentation](https://www.waveshare.com/wiki/RP2350-GEEK)
+- [WeAct Mini Debugger repository](https://github.com/WeActStudio/WeActStudio.MiniDebugger)
+- [Raspberry Pi UART documentation](https://www.raspberrypi.com/documentation/computers/configuration.html)
 
 ## Verification
 
@@ -87,6 +107,8 @@ performed.
 
 1. Inventory the user's available equipment (at minimum, USB-to-UART adapter
    type/voltage, a known-good data cable, multimeter, and any SWD probe).
+   Initial inventory is recorded above; bench-test FTDI at 3.3 V and the
+   selected RP2350/WeAct UART capability with a loopback, without the printer.
 2. Perform the AD5M-024 physical-identification steps and derive a
    board-revision-specific read-only recovery audit.
 3. Create a reviewed recovery procedure and execute a non-destructive drill
