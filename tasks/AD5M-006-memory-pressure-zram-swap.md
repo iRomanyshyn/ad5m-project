@@ -1,6 +1,6 @@
 # AD5M-006 Memory pressure, zram and swap strategy
 
-Status: proposed
+Status: in progress
 
 ## Goal
 
@@ -176,7 +176,44 @@ For any future implementation:
 
 ## Implementation notes
 
-No implementation has started.
+### 2026-10-28 static baseline audit
+
+Contrary to the original assumption that swap was only a candidate, the
+current installer already creates a persistent **128 MiB file-backed swap**.
+`install_steps.sh`, which runs inside the chroot during installation, calls
+`fallocate -l 128M /mnt/swap`, `mkswap /mnt/swap`, and `chmod 0600`.  At this
+stage `/mnt` is the chroot's own directory, so the resulting file is under
+the installed chroot on the host `/data` partition; it is neither zram nor a
+USB swap device.  On every chroot start `init_chroot.sh` sets
+`vm.swappiness=15` and runs `swapon /mnt/swap`; the normal stop path calls
+`swapoff /mnt/swap`.
+
+The BusyBox configuration includes `mkswap`, `swapon`, and `swapoff`, but no
+project-owned input selects `earlyoom`, `zramctl`, a zram package, a zram
+kernel configuration, or an explicit OOM-score policy.  The AD5M kernel is
+provided by the vendor host rather than a tracked project kernel config.
+Consequently, static source review cannot establish whether its running kernel
+has `CONFIG_ZRAM`, which compression algorithms exist, whether the current
+swap file activates successfully, or whether it is used under real pressure.
+
+This is an existing behavior, not approval of it.  The installer neither
+checks free space nor checks the results of `fallocate`, `mkswap`, and
+`swapon`; its shell flow continues if those commands fail.  Startup therefore
+remains non-blocking when the file is unavailable, but an operator has no
+recorded reason for the missing headroom.  The file also occupies internal
+`/data` storage alongside the chroot, logs, G-code and update state, so its
+write endurance and contention must be measured before changing its size,
+enabling a second swap mechanism, or calling this configuration reliable.
+
+The first hardware measurement must inventory the existing mechanism before
+experimenting: record `cat /proc/swaps`, `free`, selected `/proc/meminfo`
+fields, `vmstat`, `sysctl vm.swappiness`, process PSS/RSS via the already
+shipped `smem`, and relevant kernel messages at idle and through one
+representative print/camera/timelapse workflow.  If zram is considered,
+record the running kernel's zram capability and compression choices first;
+do not add or load a module solely to make the measurement pass.  Collection
+must be read-only, bounded, and kept separate from heater, motion, MCU or
+firmware operations.
 
 ## Verification
 
@@ -188,6 +225,14 @@ Not run.
 
 ## Remaining work
 
-After AD5M-001 establishes the canonical Buildroot integration, inspect the
-current kernel configuration and runtime memory behavior, then define the
-smallest useful measurement plan before experimenting with zram or swap.
+1. On a physical AD5M, verify whether the existing 128 MiB file activates and
+   collect the bounded baseline described above across representative
+   workloads.
+2. Identify the actual `/data` filesystem capacity/free-space margin and
+   write activity, including contention with logs, G-code and update staging.
+3. Establish the vendor kernel's zram capability and only then compare a
+   measured zram experiment against the present file-backed baseline.
+4. Decide whether to retain, reduce, remove or replace the existing swap
+   mechanism; do not enable two swap mechanisms by default without evidence.
+5. If any policy changes, add explicit failure reporting and software checks,
+   then run separately approved physical-print validation.
