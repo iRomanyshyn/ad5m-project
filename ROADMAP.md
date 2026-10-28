@@ -113,6 +113,12 @@ legacy submodule dependency.
 
 ## Security
 
+- in progress: produce a source-only provenance and privileged-execution
+  findings report before accepting further release-facing features; see
+  `tasks/AD5M-028-phase-zero-provenance-and-privileged-path-audit.md`
+- proposed: replace the shared root password with a per-printer, recoverable
+  bootstrap flow before release; see
+  `tasks/AD5M-029-credential-bootstrap-and-ssh-hardening.md`
 - remove automatic privileged execution of code supplied on removable media
   and define an explicit, verifiable recovery-media trust boundary; see
   `tasks/AD5M-025-removable-media-host-trust-boundary.md`
@@ -131,6 +137,9 @@ legacy submodule dependency.
 - shell/Python linting
 - reproducible build documentation
 - component/version manifest
+- proposed: audit the pinned Klipper fork and all local safety-affecting
+  patches before treating its generated MCU firmware as releaseable; see
+  `tasks/AD5M-030-klipper-source-and-safety-patch-audit.md`
 - diagnostics export
 - establish a layered test strategy: static checks, Klipper regression and
   batch G-code tests, mocked Klipper/Moonraker API scenarios, generic QEMU
