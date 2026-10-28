@@ -41,6 +41,9 @@ legacy submodule dependency.
 - G-code transfer/upload integrity
 - persistent user configuration
 - safer installer/update mechanism
+- proposed: make the legacy installer reject invalid archives and inadequate
+  storage before it deletes an existing chroot; see
+  `tasks/AD5M-027-installer-preflight-before-destruction.md`
 - rollback/recovery
 - MCU update recovery
 - proposed: establish a board-revision-specific recovery and reflashing

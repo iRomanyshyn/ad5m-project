@@ -46,6 +46,11 @@ embedded expected digest, signature verification, alternate release slot,
 candidate health check or rollback selection. A space, archive or setup
 failure after that deletion can therefore leave no prior chroot to boot.
 
+AD5M-027 introduces a deliberately limited preflight guard before that
+destructive step.  It does not alter this task's conclusion: archive and
+storage preflight cannot make the legacy flow transactional after a candidate
+starts changing shared state or flashing MCU firmware.
+
 Its in-chroot setup also deliberately has semantics that an application update
 must not inherit. `install_steps.sh` copies an arbitrary user-provided USB
 overlay into `/` and then invokes `S54mcu_update`. That service calls
