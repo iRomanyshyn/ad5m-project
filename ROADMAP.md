@@ -43,6 +43,9 @@ legacy submodule dependency.
 - safer installer/update mechanism
 - rollback/recovery
 - MCU update recovery
+- proposed: establish a board-revision-specific recovery and reflashing
+  capability before the first project firmware installation; see
+  `tasks/AD5M-026-recovery-and-reflashing-readiness.md`
 
 ## Safety
 
