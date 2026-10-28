@@ -10,6 +10,7 @@ Primary goals:
 - reliability
 - safety
 - maintainability
+- owner control and open, self-hosted operation
 - good touchscreen UX
 - current upstream software where practical
 - minimal unnecessary forks

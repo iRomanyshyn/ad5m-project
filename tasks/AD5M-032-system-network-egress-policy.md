@@ -1,12 +1,21 @@
-# AD5M-032 System network-egress policy
+# AD5M-032 System network capability and egress policy
 
 Status: in progress
 
 ## Goal
 
 Define every non-HelixScreen outbound network capability in the AD5M image and
-make its default, configuration owner, failure behavior and release test
-explicit.
+make its default, owner-controlled configuration, failure behavior and release
+test explicit.
+
+## Policy update — 2026-10-28
+
+ADR 0005 rejects a closed-box interpretation of this task.  The project
+supports normal LAN use and may offer useful Internet-facing capabilities;
+this task is about preventing surprise or opaque traffic, not forbidding
+connectivity.  The current opt-in NTP implementation is therefore a baseline
+control with a clear future enable path, not a permanent ban on public or
+owner-selected time sources.
 
 ## Context
 
@@ -39,9 +48,10 @@ captured and no target process was started.
 
 ## Proposed first-alpha policy
 
-1. **Offline is the default.**  The image must boot and provide local printer
-   functionality without DNS or a route to the Internet.  No boot service may
-   contact a public endpoint by default.
+1. **No surprise egress at first boot.**  The image must boot and provide
+   local printer functionality without DNS or a route to the Internet.  A
+   capability disabled initially must have a documented owner-controlled
+   enable path where it is useful; the default is not a permanent product ban.
 2. **Disable public-pool NTP by default.**  Preserve fake-hwclock's last known
    time for offline operation.  A later explicit owner action may enable time
    synchronization only with a configured LAN/local server or a specifically

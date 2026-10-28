@@ -2,6 +2,11 @@
 
 Status: in progress
 
+> Policy note (2026-10-28): ADR 0005 makes this an optional strict-privacy
+> profile investigation, not a baseline packaging blocker.  Its source audit
+> remains useful for owners who want that profile and for identifying external
+> capabilities that the normal profile must explain and control.
+
 ## Goal
 
 Determine whether an upstream-pinned HelixScreen revision can provide a small,

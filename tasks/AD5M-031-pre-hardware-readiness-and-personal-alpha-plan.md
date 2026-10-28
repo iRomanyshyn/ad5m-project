@@ -50,9 +50,9 @@ installable on the user's printer:
 3. The selected installer/update artifact has an authenticated manifest,
    preflight before destructive actions and a recovery route evidenced for the
    actual board/version (AD5M-019, AD5M-025, AD5M-026 and AD5M-027).
-4. Every enabled external network path has an explicit policy; local-only UI
-   claims exclude hidden upstream update/crash/telemetry transport
-   (AD5M-018, AD5M-023 and AD5M-032).
+4. Every enabled external network path has an explicit owner-controlled
+   policy; no UI may hide update/crash/telemetry transport or use it to gain
+   unattended privileged-update authority (AD5M-018, AD5M-023 and AD5M-032).
 5. Every shipped kernel module has source/config provenance and a reviewed
    disposition; an opaque legacy blob cannot silently become part of the
    alpha baseline (AD5M-033).
@@ -88,9 +88,9 @@ checkpoint, not a claim that the project is ready to install:
 | --- | --- | --- |
 | Privileged/update controls | Authenticated release/update design, removable-media boundary and explicit non-automatic MCU-operation contract | AD5M-019, AD5M-025, AD5M-027 and AD5M-034 define the direction; implementation/fault injection remains. |
 | Identity and LAN access | Per-printer credential/bootstrap and hostname/CORS plan that does not need a LAN-wide exception | AD5M-016, AD5M-017 and AD5M-029; a disposable non-printer validation is still required. |
-| External network | Complete boot/scheduled egress inventory and offline-by-default policy | AD5M-032 records the first profile; implement/test removal of the public NTP default before alpha. |
+| External network | Complete boot/scheduled egress inventory and owner-controlled capability policy | AD5M-032 records the first profile; public NTP is no longer an implicit default, while an owner-selectable path remains. |
 | Runtime provenance | Reviewed disposition for Klipper deltas, local patches and every binary module | AD5M-030/035 have a concrete immediate safety fix; AD5M-033 remains blocked on vendor kernel source/config provenance. |
-| UI selection | A local-only HelixScreen candidate with reviewed dependency/source closure, or a documented upstream-blocked disposition | Current official candidate is rejected for the local-only package under AD5M-018/023; do not bypass that by packaging it. |
+| UI selection | A HelixScreen candidate with reviewed dependency/source closure and a documented owner-control boundary | AD5M-018/023 retain the audit; strict local-only is optional rather than a universal package blocker. |
 | Artifact evidence | Clean build, manifest/SBOM-style component inventory and static/fault-injection validation | P2 work; ignored `build_output/` cannot satisfy it. |
 
 Once this checkpoint has been reviewed, stop expanding architecture speculatively

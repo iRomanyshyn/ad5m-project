@@ -4,13 +4,27 @@ Status: in progress
 
 ## Goal
 
-Ensure the AD5M HelixScreen variant is local-only by default: it may talk to
-the configured local Moonraker service, but it must not contact upstream
-HelixScreen, GitHub, a telemetry service, a crash service, or any other
-third-party endpoint. The sole candidate exception is an explicitly enabled
-upstream-HelixScreen telemetry contribution feature; it needs the consent,
-data and revocation controls below. It must not carry update, crash-report or
-debug-bundle upload authority with it.
+Ensure every HelixScreen external capability is transparent and controlled by
+the printer owner.  Normal local Moonraker use is supported; update checking,
+telemetry, crash reporting and support export must have explicit purpose,
+data, enable/disable and recovery semantics.  They must not carry unattended
+update or MCU-flash authority.
+
+## Policy update — 2026-10-28
+
+ADR 0005 replaces a blanket local-only baseline with owner-controlled,
+self-hosted operation.  The source findings below remain valid: the pinned
+candidate can contact update, telemetry and crash endpoints and has broader
+telemetry state than the project can describe casually.  That is now a
+transparency/configuration problem, not a reason to make Internet capability
+impossible.
+
+For the first project profile, upstream self-application remains disabled:
+the project has no transactional/recovery-safe updater yet.  This does not
+prevent an owner from choosing a future reviewed project update or from
+enabling a clearly described voluntary network feature.  Requirements below
+that demand an endpoint-free "local-only artifact" describe an optional strict
+privacy profile, not an absolute prerequisite for all HelixScreen work.
 
 ## Context
 
