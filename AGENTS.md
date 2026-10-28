@@ -80,6 +80,23 @@ Do not turn this into a conversation transcript. Mark unapproved work as
 `proposed`, retain known assumptions and limitations, and do not begin it until
 the user authorizes that task.
 
+## Durable handover record
+
+The tracked project records must be sufficient for development to resume on a
+different workstation or with a different collaborator.  Before ending a work
+slice, record each durable outcome in the smallest appropriate place:
+
+- a task for its scope, status, evidence, verification actually performed,
+  unresolved risks, and concrete next step;
+- ROADMAP.md for a concise cross-project idea not yet scoped; or
+- an ADR for a long-lived decision and its alternatives.
+
+Record facts, decisions, links/identifiers, and consequences—not a transcript
+of the discussion or speculative narration.  Explicitly distinguish observed
+evidence, assumptions, rejected directions, and work that still needs a real
+printer.  If an idea was considered but intentionally not retained, say so in
+the relevant task/ADR only when that prevents a future unsafe rediscovery.
+
 ## Git behavior
 
 Do not commit, push, merge, rebase, force-push or open pull requests unless
