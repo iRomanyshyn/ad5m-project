@@ -87,11 +87,60 @@ recoverable after a failed bootstrap.  Exercise this on a disposable
 non-printer rootfs/mock before the AD5M.  The actual console capability and
 local ownership ceremony are P4 hardware evidence under AD5M-031/026.
 
+### Buildroot/Dropbear capability audit — 2026-10-28
+
+The canonical pinned Buildroot source supplies a concrete, reviewable route
+for a key-only Dropbear profile: `BR2_PACKAGE_DROPBEAR_LOCALOPTIONS_FILE`
+appends a project-controlled header to Dropbear's `localoptions.h`.  Its own
+package logic already uses that mechanism for password-authentication settings
+when PAM or `crypt()` availability requires it.  It is therefore preferable to
+an untracked edit inside a downloaded Dropbear tree.
+
+The current integration baseline is still explicitly unsafe:
+
+- `build_scripts/buildroot/configs/base` sets
+  `BR2_TARGET_GENERIC_ROOT_PASSWD="klipper"` and enables Dropbear.
+- Buildroot's default root-login setting is password-capable when a root
+  password is configured.  The base configuration does not explicitly record
+  a stricter root-login policy.
+- Buildroot's SysV `S50dropbear` sources `/etc/default/dropbear`, appends `-R`
+  to generate missing host keys, then starts `/usr/sbin/dropbear`.  It does not
+  itself turn a missing password into a safe ownership ceremony.
+- The existing installer replaces `/etc/dropbear` with persistent state and
+  also persists `/root/.ssh`, so host keys and `authorized_keys` have an
+  intended per-printer storage boundary once initial ownership exists.
+
+The proposed implementation sequence is therefore:
+
+1. Add a small, committed AD5M Dropbear local-options header that disables
+   password authentication for the selected build, and reference it through
+   the canonical Buildroot configuration rather than patching package output.
+2. Remove the shared root password only in the same reviewed change, with a
+   build-time *ignored* public-key input for the personal alpha or a proven
+   local-console bootstrap.  No public key belongs in Git or in a generic
+   release image.
+3. Make the service's listen/address/port policy explicit in root-owned
+   configuration.  Do not use a default listener plus a later firewall rule
+   as the only access decision.
+4. Test the built Dropbear binary and SysV path inside a disposable,
+   non-printer rootfs: authorized key accepted; password rejected; no key
+   rejected; generated host key becomes persistent; malformed/missing
+   bootstrap input fails closed; and an existing persistent authorized key
+   survives a candidate/rollback transition.
+5. Only then change an AD5M image.  UART/local-console ownership evidence and
+   real LAN reachability remain dedicated hardware tests, not substitutes for
+   the disposable-rootfs checks.
+
+This audit establishes configuration capability, not the selected Dropbear
+runtime semantics for the final image.  No image configuration, password,
+key, service, target rootfs or printer was changed or run.
+
 ## Verification
 
 2026-10-28: source-only inspection established the current root-password,
-Dropbear and persistent-state boundaries, and the pinned Moonraker first-user
-constraint.  No authentication behavior was changed or tested.
+Dropbear and persistent-state boundaries, the pinned Moonraker first-user
+constraint, and the canonical Buildroot `localoptions.h` capability.  No
+authentication behavior was changed or tested.
 
 ## Hardware verification
 
