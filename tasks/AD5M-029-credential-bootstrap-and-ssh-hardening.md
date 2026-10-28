@@ -158,15 +158,46 @@ The proposed implementation sequence is therefore:
    the disposable-rootfs checks.
 
 This audit establishes configuration capability, not the selected Dropbear
-runtime semantics for the final image.  No image configuration, password,
-key, service, target rootfs or printer was changed or run.
+runtime semantics for the final image.
+
+### Per-printer password build input — 2026-10-28
+
+The first small P2 implementation removes the committed
+`BR2_TARGET_GENERIC_ROOT_PASSWD="klipper"` fragment.  The AD5M Buildroot
+wrapper now requires a local, ignored file containing one raw SHA-256-crypt
+(`$5$...`) hash before it initializes a variant output.  It rejects a missing,
+multi-line, malformed, group-readable or world-readable input; it then writes
+the Buildroot-required dollar-escaped value into the disposable generated
+`.config`.  No clear-text password is passed to Buildroot or committed.
+
+`build_scripts/create-root-password-hash.sh` is the ordinary home-LAN path:
+it asks for the owner-selected password twice without echoing it, uses
+`openssl passwd -5 -stdin`, writes only the hash below the ignored
+`build_scripts/buildroot/configs/local/` directory with mode `0600`, and
+refuses to overwrite an existing input.  An owner who stores the hash
+elsewhere may select it with `AD5M_ROOT_PASSWORD_HASH_FILE`.
+
+This fixes the shared SSH credential but does **not** yet prove a usable
+Dropbear login or solve Moonraker/browser authorization.  In particular,
+Moonraker's current broad trust configuration remains owned by AD5M-016 and
+must not be mistaken for a secured web-control plane merely because the root
+password is now unique.
 
 ## Verification
 
 2026-10-28: source-only inspection established the current root-password,
 Dropbear and persistent-state boundaries, the pinned Moonraker first-user
-constraint, and the canonical Buildroot `localoptions.h` capability.  No
-authentication behavior was changed or tested.
+constraint, and the canonical Buildroot `localoptions.h` capability.
+
+2026-10-28: `make validate` passed in the integration repository.  It checks
+that a shared root-password fragment cannot return and that the local
+SHA-256-crypt input/generator contract remains present.  `make
+validate-config` passed against the recorded clean Buildroot revision in a
+temporary output directory; it confirmed the known non-secret fixture hash is
+correctly escaped in the final generated configuration.  The hash helper was
+also exercised with a temporary password: it produced mode `0600`, a valid
+SHA-256-crypt hash and rejected an overwrite.  No target rootfs, Dropbear
+server, SSH client, Moonraker service or printer was run.
 
 ## Hardware verification
 
