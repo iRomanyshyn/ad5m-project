@@ -215,6 +215,37 @@ do not add or load a module solely to make the measurement pass.  Collection
 must be read-only, bounded, and kept separate from heater, motion, MCU or
 firmware operations.
 
+### Decision direction
+
+Do not alter the current file-backed swap solely from static inspection: on a
+128 MiB device, removing emergency headroom before measuring could turn an
+unknown degradation into an OOM failure.  It remains a **temporary baseline**,
+not an endorsed default.  In particular, do not create a second default swap
+layer on top of it.
+
+The preferred experiment, if the vendor kernel demonstrably supports it, is a
+bounded **zram-only** trial that disables the file-backed swap for that trial
+and compares the same workloads.  zram avoids persistent flash writes, but
+its compressed pages and CPU cost still consume scarce RAM/CPU; its size and
+compression setting must be selected from observed pressure, not from a
+generic 64/128 MiB rule.  A successful zram result is a candidate to replace,
+not supplement, the internal-flash swap.
+
+Decision after the measurements:
+
+- If the present file swap has no meaningful use and no OOM/pressure evidence,
+  remove it rather than reserving storage by habit.
+- If memory pressure is real and zram is available with acceptable print-time
+  latency, use one bounded zram configuration and retire the file swap.
+- If zram is unavailable or measurably harms printer responsiveness, retain a
+  small file-backed fallback only with explicit free-space checks, activation
+  result logging, and evidence that its write/latency cost is acceptable.
+
+USB-backed swap remains out of the default design.  Any chosen mechanism must
+be optional at boot: Klipper Mod must start normally when it is absent or
+cannot be activated, while leaving an actionable local log rather than
+silently pretending that headroom exists.
+
 ## Verification
 
 Not run.
