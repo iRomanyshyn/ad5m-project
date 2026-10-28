@@ -30,10 +30,15 @@ network-isolated or vendor-locked box.
 - A safe default may avoid surprise third-party traffic during first boot, but
   must leave a documented, local owner-controlled way to enable a useful
   capability.  "Disabled by default" is not "unavailable by design".
-- Automatic application of privileged updates and automatic MCU flashing
-  remain out of scope until the project has a verifiable recovery/update
-  mechanism.  This is an integrity and safety constraint, not an attempt to
-  restrict the owner from installing a deliberately selected artifact.
+- Owner-opt-in automatic **project** updates are a supported product goal once
+  a verifiable recovery/update mechanism exists.  They may update a reviewed,
+  compatible release bundle or explicitly independent components, but must
+  have channels, immutable identities, a staged health check and rollback.
+  Independent upstream self-updaters must not silently bypass that boundary.
+- Automatic MCU flashing and automatic safety-critical printer-configuration
+  changes remain out of scope.  This is an integrity and safety constraint,
+  not an attempt to restrict the owner from installing a deliberately selected
+  artifact.
 - Authentication, consent, and artifact integrity must be proportionate to
   the capability.  They must not be used to force a proprietary service or
   prevent inspection, replacement or local administration by the owner.

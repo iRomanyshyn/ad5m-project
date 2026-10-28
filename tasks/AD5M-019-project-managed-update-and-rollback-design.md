@@ -10,17 +10,27 @@ delegate update authority to HelixScreen or any other bundled application.
 
 ## Decision direction
 
-Do not allow automatic application of updates in the first release. In
-particular, upstream HelixScreen self-update stays disabled under AD5M-018.
-The safe initial interaction is user-initiated: check, inspect the identified
-project release and its notes, download/stage it, then explicitly approve its
-application while the printer is idle.
+Owner-opt-in automatic updates are a product goal, not a feature to be
+permanently withheld.  The initial personal-alpha interaction remains
+user-initiated: inspect the identified project release and its notes,
+download/stage it, then explicitly approve its application while the printer
+is idle.  That gives the project a recovery baseline before unattended
+operation is offered.
 
-Background notification or unattended application is not an initial goal. A
-future notification check may be considered only as an explicit opt-in; an
-unattended apply requires a separate decision after every criterion in this
-task has production evidence. It is not justified merely because a newer UI
-release exists.
+After the manifest, staging, health-check and rollback requirements below have
+production evidence, the owner may select an update channel and opt into
+automatic staging/application.  Automatic application must still wait for a
+known idle state, use a signed immutable release, record an outcome, and roll
+back on failure.  It is not justified merely because one UI component reports
+a newer upstream version.
+
+HelixScreen, Fluidd, Klipper and similar components may update automatically
+only through that project-managed compatibility decision: either as a reviewed
+release bundle or as a manifest-declared component with an explicitly verified
+independent compatibility/rollback contract.  An embedded upstream updater
+may report availability to the project updater, but must not download/apply
+outside its authority.  MCU firmware and safety-critical printer
+configuration are never automatic-update payloads.
 
 ## Context
 
@@ -31,9 +41,9 @@ Updating HelixScreen independently would also bypass the project's source
 review, package closure, resource validation and compatibility testing.
 
 The project already requires predictable upgrades and rollback. AD5M-015
-therefore rejects in-application self-update before this task is completed,
-and AD5M-018 requires the upstream update checker/self-updater to remain out
-of the local-only variant.
+therefore rejects independent in-application apply before this task is
+completed, and AD5M-018 requires the upstream update checker/self-updater not
+to bypass the project-managed release boundary.
 
 ### Current installer baseline audit (2026-10-27)
 
@@ -237,11 +247,14 @@ choose the prior known-good release before normal services run.
   state bounded on constrained storage.
 - UI/application packages cannot update themselves, replace the updater,
   alter its trust root, or enable automatic apply through their own settings.
+  They may participate in a reviewed project-managed automatic-update channel
+  once its bundle/component compatibility contract has evidence.
 
 ## Non-goals
 
-- Enabling upstream HelixScreen self-update, a generic package-manager update
-  or automatic `pip`/npm/Git recovery.
+- Enabling unreviewed upstream HelixScreen self-update, a generic
+  package-manager update or automatic `pip`/npm/Git recovery outside the
+  project update authority.
 - Automatically updating Klipper MCU firmware, heater/motion configuration or
   any other safety-critical printer component.
 - Requiring cloud access to install, roll back or recover a release.
@@ -259,9 +272,10 @@ choose the prior known-good release before normal services run.
 3. Implement check/download/stage/verify/apply/health-check/rollback as
    explicit state transitions with durable journals and power-loss tests.
 4. Add a local UI that displays release identity, compatibility notes, required
-   restart and rollback availability, then asks for confirmation. The UI may
-   request the operation; it does not own trust verification or privileged file
-   changes.
+   restart and rollback availability.  Initially it asks for confirmation; a
+   later owner-selected channel may authorize idle-only automatic application.
+   The UI may request the operation; it does not own trust verification or
+   privileged file changes.
 5. Add software-only fault injection for interrupted downloads, bad signatures,
    exhausted storage, interrupted switch, migration failures, service failures
    and rollback. Perform hardware acceptance only after an installable image
@@ -269,15 +283,16 @@ choose the prior known-good release before normal services run.
 
 ## Acceptance criteria
 
-- A project release can be staged, signature-verified and applied only after
-  local confirmation on an idle printer.
+- A project release can be staged, signature-verified and applied after local
+  confirmation on an idle printer; after recovery evidence, an owner-selected
+  channel may apply it automatically only while the same idle constraint holds.
 - Interrupted or invalid candidate releases leave the current release usable.
 - A post-switch failure automatically returns to the previously verified
   release and explains the reason through a local recovery path.
 - Documented persistent user state survives both update and rollback; no
   authentication database or telemetry consent is silently reset.
 - No production path lets HelixScreen or another bundled application fetch and
-  apply its own upstream release.
+  apply its own upstream release outside the project-managed updater.
 - No project-update path invokes `S54mcu_update`, accepts an arbitrary USB
   root overlay, or deletes the active chroot before the candidate is verified
   and recoverable.

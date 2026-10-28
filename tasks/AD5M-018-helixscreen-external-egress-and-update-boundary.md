@@ -20,11 +20,13 @@ transparency/configuration problem, not a reason to make Internet capability
 impossible.
 
 For the first project profile, upstream self-application remains disabled:
-the project has no transactional/recovery-safe updater yet.  This does not
-prevent an owner from choosing a future reviewed project update or from
-enabling a clearly described voluntary network feature.  Requirements below
-that demand an endpoint-free "local-only artifact" describe an optional strict
-privacy profile, not an absolute prerequisite for all HelixScreen work.
+the project has no transactional/recovery-safe updater yet.  The intended
+replacement is not permanently manual updates, but the owner-selectable,
+project-managed automatic-update channel in AD5M-019.  It may update a
+reviewed compatible HelixScreen component/bundle once staging, health and
+rollback evidence exists.  Requirements below that demand an endpoint-free
+"local-only artifact" describe an optional strict privacy profile, not an
+absolute prerequisite for all HelixScreen work.
 
 ## Context
 
