@@ -143,4 +143,6 @@ Not run.
 
 Perform the physical audit plan on the actual target before selecting an
 internal storage location, changing camera discovery, or enabling a display
-service.
+service.  AD5M-025 separately owns the removable-media execution and recovery
+trust boundary; topology evidence must not be mistaken for authority to run
+code supplied on USB media.

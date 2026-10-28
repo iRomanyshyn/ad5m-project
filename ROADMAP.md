@@ -107,6 +107,9 @@ legacy submodule dependency.
 
 ## Security
 
+- remove automatic privileged execution of code supplied on removable media
+  and define an explicit, verifiable recovery-media trust boundary; see
+  `tasks/AD5M-025-removable-media-host-trust-boundary.md`
 - proposed: define Moonraker authorization, trusted-client and CORS policy
   before changing browser endpoints; see
   `tasks/AD5M-016-moonraker-lan-authorization-and-browser-origins.md`
