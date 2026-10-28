@@ -174,6 +174,16 @@ Buildroot; the separate configuration runner did configure it in temporary
 output but did not compile a target image, execute target code, or establish
 hardware behavior.
 
+### 2026-10-28 base-image media scope update
+
+The base image no longer ships FFmpeg, x264, or the Moonraker timelapse
+component. The static check now rejects their active Buildroot/configuration/
+post-build wiring, while the disposable configuration check rejects selected
+FFmpeg/x264 packages. The portable and Ruff gates exclude the parked
+timelapse source because it is not target runtime code. This preserves the
+same software-only boundary; it does not prove an image, camera, or printer
+workflow.
+
 ## Hardware verification
 
 Not applicable to the initial software-only foundation.

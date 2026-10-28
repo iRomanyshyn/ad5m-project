@@ -1,6 +1,6 @@
 # AD5M-009 FFmpeg distribution profile
 
-Status: in progress
+Status: complete
 
 ## Goal
 
@@ -124,19 +124,28 @@ constrained local command to turn saved JPEG frames into an MP4 with
 background work while printing can cause print failure on the constrained
 AD5M.
 
-Selected direction for the personal alpha: retain the reviewed, constrained
-FFmpeg profile in the built image while timelapse rendering remains a
-supported feature.  The printer must never self-download FFmpeg or any other
-executable at runtime: that would bypass source provenance, package integrity,
-rollback and storage-budget controls.  Nor should it execute an arbitrary
-binary copied from USB.
+### Base-image decision — 2026-10-28
 
-If the 4 MiB-class media footprint later proves undesirable, offer a distinct
-optional **media/timelapse add-on** through the project's normal update
-mechanism.  It must be an exact AD5M artifact with a manifest, compatible
-component versions, integrity/authenticity verification, atomic
-install/rollback and a resource policy that prevents rendering during a
-print.  Offline USB delivery may carry that same verified project artifact;
-USB is a transport, not an authority to run whatever executable it contains.
-This option is deferred until AD5M-019/025/027 provide the required update
-and recovery contracts.
+The prior personal-alpha selection above is superseded. The base image excludes
+FFmpeg, x264, automated timelapse capture, its Klipper include, its Moonraker
+configuration, and its Moonraker component. This is a product and resource
+decision, not a claim that FFmpeg is unsafe: automatic timelapse offers little
+operational value while rendering can contend with printing on a 128 MiB
+device. The USB camera's live MJPEG stream remains ustreamer/V4L2 and does not
+need FFmpeg.
+
+The integration tree retains the former component and macro sources only as
+frozen provenance material; the post-build script does not copy the component
+and removes the macro from the target rootfs. Static and disposable
+Buildroot-configuration checks now reject a base profile that reintroduces the
+FFmpeg/x264 timelapse stack. No printer, target image, or camera workflow was
+run for this change.
+
+A future optional **media/timelapse add-on** is deliberately deferred. It must
+be an exact AD5M artifact with a manifest, compatible component versions,
+integrity/authenticity verification, atomic install/rollback, a storage budget,
+and a resource policy that prohibits capture/rendering during an active print.
+The printer must never self-download an executable or run an arbitrary binary
+from USB; offline USB delivery may carry only that same verified project
+artifact. This option remains gated on AD5M-019/025/027 update and recovery
+contracts plus focused hardware validation.

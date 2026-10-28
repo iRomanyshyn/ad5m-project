@@ -9,8 +9,8 @@ extensions without applying broad automated rewrites to printer-related code.
 
 ## Context
 
-AD5M-002's portable lint baseline compiles all four active Python sources and
-keeps bytecode out of the repository.  On 2026-10-27, a diagnostic full Ruff
+AD5M-002's portable lint baseline initially compiled four active Python sources
+and kept bytecode out of the repository. On 2026-10-27, a diagnostic full Ruff
 scan reported 253 existing findings in the inherited extension sources, with a
 large concentration in `build_scripts/components/moonraker_extensions/timelapse.py`.
 The results include style findings, catch-all exception handling, logging
@@ -24,8 +24,8 @@ patterns, and suggested transformations that could change runtime behaviour.
   development/CI only.
 - Triage diagnostics into safe mechanical formatting, correctness defects, and
   intentional integration behaviour.
-- Add narrowly scoped tests before changing timelapse, print recovery,
-  checksum, or shell-command behaviour.
+- Add narrowly scoped tests before changing print recovery, checksum, or
+  shell-command behaviour.
 - Introduce the lint gate incrementally with documented, reviewed exclusions
   where an exception remains intentional.
 
@@ -60,7 +60,8 @@ does not run a Klipper, Moonraker, camera, FFmpeg or printer workflow.
 
 ### 2026-10-28 narrow host-only initial gate
 
-The active runtime Python surface is four GPLv3-headered modules.  Their
+At the time of this audit, the active runtime Python surface was four
+GPLv3-headered modules. Their
 headers identify `gcode_shell_command.py` with Eric Callahan, `md5_checker.py`
 with minicx, `power_loss_recovery.py` with Ankur Verma, and `timelapse.py`
 with Christoph Frei.  The local history shows that the shell-command and
@@ -76,8 +77,8 @@ Ruff `0.17.0` is now pinned in `requirements-dev.txt` and required by
 inside the checkout, or becomes a target-image dependency.  The existing
 portable `make lint` and `make validate` remain usable on a host without Ruff.
 
-The initial policy selects only `F401` (unused imports) for exactly the four
-runtime modules.  That is intentionally smaller than the 253-finding
+The initial policy selected only `F401` (unused imports) for exactly the four
+runtime modules. That was intentionally smaller than the 253-finding
 diagnostic full scan: it excludes formatting, exception handling, logging,
 typing modernization and suggested code transformations until focused tests
 cover each behavior-sensitive module.  The sole current finding was an unused
@@ -85,8 +86,8 @@ type-checking-only `WebCam` import in the timelapse extension; removing that
 name cannot change runtime imports or the timelapse command path.
 
 The next increment must be selected rule-by-rule with per-module tests and a
-documented reason.  In particular, do not enable broad `F`/`E`/`B`/`S`/`UP`
-families or run `ruff --fix` across power-loss recovery or timelapse merely to
+documented reason. In particular, do not enable broad `F`/`E`/`B`/`S`/`UP`
+families or run `ruff --fix` across safety-sensitive extensions merely to
 reduce the count.
 
 ### 2026-10-28 source classification before further linting
@@ -107,3 +108,13 @@ it does not authenticate authorship, audit each repository's full dependency
 closure, establish behavior on the AD5M, or authorize bulk import/update.
 The external commits were retained as provenance identifiers, not as mutable
 branch names or automatic update sources.
+
+### 2026-10-28 base-image scope update
+
+The project removed the FFmpeg/timelapse feature from the base image. The
+timelapse component and macro sources remain parked as frozen provenance
+references but are not included in the target rootfs or portable/Ruff active
+runtime source sets. The active gate therefore covers the three Klipper
+extensions only. Any future media add-on must restore them only with focused
+Moonraker/camera/resource tests; this scope change is not an approval to update
+or rewrite them.
