@@ -1,6 +1,6 @@
 # AD5M-020 Backlight control ownership and safety
 
-Status: proposed
+Status: in progress
 
 ## Goal
 
@@ -102,6 +102,37 @@ needs separately published kernel/UAPI source or headers plus a controlled
 physical-display review.  Until then, treat the current values as an observed
 compatibility constraint, not an authoritative interface to reimplement.
 
+### 2026-10-28 source-identity and retention check
+
+This package was not among the source inputs audited by AD5M-008, so its
+fixed Git revision was checked independently before considering either
+retention or replacement.  A fresh clone from the recipe's configured remote
+was able to fetch the exact object
+`3cd9a0898e51a18e83976c7cab29037f8364f406` by object ID.  The checked-out
+object has parent `509dde424680a71f1b8dd4390641884f7a5e81da`, author and
+committer timestamp `2025-08-23`, and `git fsck --no-dangling` passed after
+checkout.  Its five tracked files are `LICENSE`, `README.md`, `backlight.py`,
+`buildall.sh` and `pyproject.toml`; there are no Gitlinks/submodules.
+
+This confirms that the recipe names a retrievable immutable object at the
+time of review, and the SHA-256 values of all five tracked files match the
+already extracted local Buildroot package tree.  It does **not** make the
+external package an approved implementation source: the revision is not an
+ancestor of the remote's advertised `origin/HEAD`, no remote branch or tag
+was found to contain it, and `git verify-commit` could not verify a
+cryptographic signature.  Direct object-ID fetching is therefore an
+availability dependency that could disappear if the remote later prunes the
+object.  The GPL-3.0 text is present in `LICENSE`; any project-owned source
+or retained copy still needs an explicit license and provenance decision.
+
+The source's runtime module remains as described above: it has no declared
+runtime dependencies and its static imports are limited to `argparse`,
+`fcntl.ioctl`, and `struct`.  Its developer-only `buildall.sh` includes a
+PyPI upload command, but it is neither selected by the recipe nor executed
+by this review.  No source file was run.  This evidence establishes source
+identity and a reproducibility risk, not the `/dev/disp` ABI or safety of
+issuing its ioctls.
+
 ### Candidate direction
 
 After the vendor kernel/UAPI and a physical AD5M confirm the interface, add a
@@ -147,9 +178,10 @@ Not run.
 
 1. Locate the relevant vendor kernel headers/source and establish the display
    ioctl ABI and ownership of `/dev/disp`.
-2. Review the existing package's pinned source and license provenance against
-   the project source policy, then choose replacement or narrowly justified
-   retention.
+2. Decide whether to retain an independently archived, license-reviewed
+   source artifact until migration, or replace the recipe before the remote
+   can make its object unavailable.  Do not silently repin it to the
+   advertised branch head.
 3. Design the project-owned command and build recipe without copying
    third-party implementation details blindly.
 4. Add host-side argument/error tests and package checks.
