@@ -45,7 +45,8 @@ installable on the user's printer:
    identities have a reviewed disposition.  A first candidate must not
    automatically flash an MCU merely because it boots, and legacy flash-result
    accounting must not hide a partial failure (AD5M-030, AD5M-034 and
-   AD5M-019).
+   AD5M-019).  It must also remove the load-cell diagnostic MCU memory-safety
+   defect (AD5M-035).
 3. The selected installer/update artifact has an authenticated manifest,
    preflight before destructive actions and a recovery route evidenced for the
    actual board/version (AD5M-019, AD5M-025, AD5M-026 and AD5M-027).
@@ -64,7 +65,8 @@ installable on the user's printer:
 1. Complete P0 (AD5M-028) and maintain this task as the dependency map.
 2. Complete P1 source/design work in this order: AD5M-030, AD5M-029 with
    AD5M-016, AD5M-032, AD5M-033, AD5M-034, then AD5M-019/025/027
-   reconciliation.
+   reconciliation.  AD5M-035 is an immediate software-only safety fix once
+   its narrow production disposition is approved.
 3. Implement P2 changes only after their owning design is accepted.  Prefer
    small static checks and deterministic artifacts over feature additions.
 4. Review the P3 checklist with the owner before any cable is connected to an

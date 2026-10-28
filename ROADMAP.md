@@ -61,6 +61,9 @@ legacy submodule dependency.
 - review heater verification configuration
 - review temperature limits
 - probing/load-cell safety
+- proposed: remove the reachable load-cell diagnostic MCU buffer-overflow path
+  before any mainboard firmware is flashed; see
+  `tasks/AD5M-035-loadcell-diagnostic-memory-safety.md`
 - MCU flashing failure handling
 - shutdown/power behavior
 

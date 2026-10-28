@@ -118,6 +118,35 @@ comparison for their protocol/boot assumptions, a deliberate disposition for
 each diagnostic command, and a hardware test plan before any MCU artifact can
 be releaseable.
 
+### Active integration and bounded-command finding (2026-10-28)
+
+The fork additions are active project inputs, not dead source: the `ffad5m`
+mainboard build configuration enables both `CONFIG_FLASHFORGE_LOADCELL` and
+`CONFIG_FLASHFORGE_TVOC`; the eboard configuration enables neither.  The
+shipped base printer configuration instantiates both host components on `mcu`,
+and production macros invoke `FLASHFORGE_LOAD_CELL_TARE` before manual probing
+and bed-mesh calibration.  No configured `max_force` value overrides the host
+component's source default of 900 g with `shutdown` action.  Those are source
+facts only; they do not establish the correct force threshold, pin mapping or
+safe target behavior.
+
+A concrete source defect was found in the diagnostic route:
+
+1. `FLASHFORGE_LOAD_CELL_TEST CMD=<text>` accepts arbitrary UTF-8 text in the
+   host component and forwards its encoded length through an MCU `%*s`
+   command.
+2. `command_flashforge_loadcell_test_cmd()` passes that length to
+   `enqueue_flashforge_command()`.
+3. The latter copies `cmd_len` bytes into `struct queued_cmd::cmd_data`, a
+   32-byte array, with no bounds check.
+
+An overlong G-code value can therefore write beyond the MCU queue slot.  This
+is a source-level memory-safety finding; it was not sent to a printer and is
+not evidence of an observed hardware failure.  The debug command is not
+needed by the regular shipped macros.  AD5M-035 owns its removal or a strictly
+bounded diagnostic-profile redesign.  It is a release blocker for any image
+that includes this MCU firmware.
+
 ## Hardware verification
 
 Not run.
