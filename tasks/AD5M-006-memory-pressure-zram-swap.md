@@ -246,6 +246,40 @@ be optional at boot: Klipper Mod must start normally when it is absent or
 cannot be activated, while leaving an actionable local log rather than
 silently pretending that headroom exists.
 
+### USB storage and internal-install research variant
+
+An explicitly provisioned USB storage device is worth evaluating as an
+**opt-in research variant**, including a modest physical modification that
+routes USB internally and secures a fast, suitable device inside the printer.
+It could reduce write pressure on the `/data` partition and avoids relying on
+an externally dangling flash drive.  It is still removable-style storage from
+the operating system's perspective, so an internal location does not make it
+a boot requirement or erase its failure modes.
+
+Before any implementation, evaluate the candidate device and modification for
+power draw and startup sequencing, USB bandwidth/contention with the camera,
+thermal exposure, vibration/strain relief, serviceability, electrical safety,
+and recovery after a loose connector or a failed device.  The test plan must
+include absent-at-boot, delayed discovery, live disconnect, I/O error,
+full-device, filesystem/swap-header corruption, cold boot, warm reboot and
+normal shutdown.  A printer must remain able to start Klipper Mod and print
+with this device unavailable; no service may block indefinitely while waiting
+for it.
+
+Do not activate arbitrary USB media by kernel-assigned `/dev/sdX` name, label
+alone, or a broad hot-plug rule.  Provisioning must be an explicit local
+operator action and bind the chosen device to a stable identity and expected
+capacity before activation.  It must never choose the camera, installation
+media or an unknown user's drive.  The design also needs a clear disclosure:
+swap can contain sensitive process memory, so an externally accessible drive
+increases physical-data exposure unless a separately reviewed, usable
+encryption/key-lifecycle design exists.
+
+If measured, compare this option against both no-swap and zram-only using the
+same workloads, recording swap I/O, print-time latency and the failure cases
+above.  A favourable result may justify a documented user-enabled profile;
+it does not justify making internal USB swap the production default.
+
 ## Verification
 
 Not run.
@@ -267,3 +301,6 @@ Not run.
    mechanism; do not enable two swap mechanisms by default without evidence.
 5. If any policy changes, add explicit failure reporting and software checks,
    then run separately approved physical-print validation.
+6. Only after those baselines, assess an explicitly provisioned internally
+   mounted USB-storage profile against its mechanical, power, privacy and
+   disconnect-recovery criteria; it remains user-enabled rather than default.
