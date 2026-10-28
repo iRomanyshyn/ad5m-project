@@ -60,14 +60,15 @@ needs an explicit profile rather than an inherited default password policy.
 
 ### Selected direction for the personal alpha
 
-- Ship no root password and no packaged private key.  Remote administration is
-  key-only after bootstrap; a release profile must explicitly verify the
-  selected Dropbear password/root-login semantics rather than rely on defaults.
-- The initial owner establishes access only through either a verified local
-  console procedure (expected to be UART in the later physical session) or a
-  per-device, operator-supplied public key consumed from a local ignored build
-  input.  The latter is permitted for the owner's personal alpha only; it must
-  never become a committed release asset or a public installation convention.
+- Ship no shared root password and no packaged private key.  Support both
+  owner-selected per-device password access and SSH-key access; key-only is a
+  supported profile, not a restriction imposed on an owner who reasonably
+  prefers a password.
+- The initial owner establishes access through a verified local console
+  procedure (expected to be UART in the later physical session), a per-device
+  operator-supplied public key from an ignored build input, or a per-device
+  bootstrap password delivered through a local owner-controlled path.  Neither
+  public key nor password belongs in Git or in a generic release asset.
 - Before a key and normal Moonraker user exist, do not expose a temporary
   unauthenticated LAN setup route.  The bootstrap helper, if any, must be
   invocable only from the verified local path, must create its own bounded
@@ -76,6 +77,18 @@ needs an explicit profile rather than an inherited default password policy.
   documented permissions and backup/redaction rules.  Rotation/revocation
   must require local owner authorization and must not silently delete working
   keys or users during update/rollback.
+
+Password bootstrap must not rely on a vague "expired password" promise.  The
+checked BusyBox configuration has shadow-password and `passwd` support, but
+does not enable `chage` or `chpasswd`; and this audit has not established that
+Dropbear turns a password-expiry condition into an SSH-side password-change
+dialogue.  A blindly expired SSH password may instead be a lockout.  If a
+first-login password-change experience is wanted, implement it as an explicit,
+tested onboarding state: authenticate with the unique bootstrap password,
+present only the bounded local setup action, require a successful `passwd`
+change and durable completion marker, then retire the bootstrap secret.  It
+is a convenience flow, not the security proof; secrecy/uniqueness and local
+delivery of the initial password remain the proof.
 
 ### Open implementation proof
 
@@ -112,21 +125,26 @@ The current integration baseline is still explicitly unsafe:
 
 The proposed implementation sequence is therefore:
 
-1. Add a small, committed AD5M Dropbear local-options header that disables
-   password authentication for the selected build, and reference it through
+1. Add a small, committed AD5M Dropbear local-options/configuration profile
+   with explicit password-authentication semantics, and reference it through
    the canonical Buildroot configuration rather than patching package output.
-2. Remove the shared root password only in the same reviewed change, with a
-   build-time *ignored* public-key input for the personal alpha or a proven
-   local-console bootstrap.  No public key belongs in Git or in a generic
-   release image.
+   The profile must support deliberate key-only and password-enabled modes.
+2. Remove the shared root password only in the same reviewed change.  For the
+   password mode, accept a per-device ignored build/install input or a
+   verified local generation-and-delivery path; for key mode, accept a
+   per-device ignored public-key input or local-console bootstrap.  No
+   credential belongs in Git or in a generic release image.
 3. Make the service's listen/address/port policy explicit in root-owned
    configuration.  Do not use a default listener plus a later firewall rule
    as the only access decision.
 4. Test the built Dropbear binary and SysV path inside a disposable,
-   non-printer rootfs: authorized key accepted; password rejected; no key
-   rejected; generated host key becomes persistent; malformed/missing
-   bootstrap input fails closed; and an existing persistent authorized key
-   survives a candidate/rollback transition.
+   non-printer rootfs: authorized key accepted in key-only mode; a unique
+   bootstrap password accepted only in password mode; shared/expired/missing
+   credentials rejected as designed; generated host key becomes persistent;
+   malformed/missing bootstrap input fails closed; and existing persistent
+   keys/password state survive a candidate/rollback transition.  Test an
+   onboarding password-change flow explicitly; do not infer it from shadow
+   file fields alone.
 5. Only then change an AD5M image.  UART/local-console ownership evidence and
    real LAN reachability remain dedicated hardware tests, not substitutes for
    the disposable-rootfs checks.
