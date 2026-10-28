@@ -60,6 +60,14 @@ needs an explicit profile rather than an inherited default password policy.
 
 ### Selected direction for the personal alpha
 
+- Treat an ordinary home LAN as the normal use case, not as a hostile or
+  enterprise-only environment.  The normal first-access path should be a
+  plainly documented per-printer password and ordinary browser/SSH login;
+  SSH keys, restrictive listener profiles and recovery controls must remain
+  available without becoming mandatory rituals for a person who simply wants
+  to use their printer.  Avoid security theatre: the essential baseline is no
+  shared secret, no accidental unauthenticated control path, and a recoverable
+  owner-controlled reset path.
 - Ship no shared root password and no packaged private key.  Support both
   owner-selected per-device password access and SSH-key access; key-only is a
   supported profile, not a restriction imposed on an owner who reasonably
