@@ -147,6 +147,39 @@ needed by the regular shipped macros.  AD5M-035 owns its removal or a strictly
 bounded diagnostic-profile redesign.  It is a release blocker for any image
 that includes this MCU firmware.
 
+### Remaining fork-path review — 2026-10-28
+
+The following review used the final locally inspected pinned source as a
+read-only aid.  A temporary fork clone was a partial/promisor checkout, so a
+network-independent textual diff could not be completed for every historical
+blob after its remote became unavailable.  The observations below are thus
+from the active final source/configuration and commit metadata, not a claim of
+a complete reproducible historical diff.
+
+| Area | Active source behavior | Disposition |
+| --- | --- | --- |
+| TVOC host/MCU pair | The mainboard enables `CONFIG_FLASHFORGE_TVOC`; the host config creates `[flashforge_tvoc]` and exposes it through a `temperature_sensor`.  The MCU binds UART4 RX (`PC11`) at 9600 baud, parses 9-byte `FF 18` frames with a checksum, and publishes CO2, TVOC and HCHO values.  The host samples its last TVOC value every 0.5 s, reports a zero "target", and deliberately makes `setup_minmax()` a no-op. | No direct heater, motion or MCU-flash action was found in this code path, but pin/voltage/protocol assumptions and the use of a generic temperature-sensor interface are unverified.  Keep it out of safety-control decisions and require a target read-only sensor/protocol test before accepting a flashed artifact. |
+| Eboard reset/bootloader | The checked eboard config selects `N32G455xC`, 144 MHz, a 64 KiB bootloader offset (`FLASH_APPLICATION_ADDRESS=0x08010000`); the mainboard selects `N32G455xE` with no bootloader offset.  For the eboard combination, `FIRMWARE_RESTART` writes backup-register magic `0x1234` then resets, while bootloader request is a bare reset because the code assumes the eboard bootloader's default behavior. | Do not alter, call, or treat this as a recovery guarantee before proving the exact board/bootloader behavior.  A failed assumption affects the ability to reconnect or reflash, so AD5M-026/034 own target evidence. |
+| N32G45x support | The fork maps N32G45x to the STM32F1 family and defines clock, flash-size and boot-offset values used by the selected AD5M configs.  The configuration is evidence of intended target identity only. | Retain as a pinned fork-specific input.  Verify actual MCU markings, boot offsets, clocks and serial links during read-only hardware discovery before building an accepted MCU artifact. |
+| Virtual-SD event | The fork emits `virtual_sdcard:load_file` after file selection and print-stat setup.  Project `md5_checker` and timelapse extensions subscribe to virtual-SD events; the change is an integration contract, not a peripheral protocol.  Commit metadata identifies the feature as `virtual_sdcard: emit events on file load` (2025-06-13). | Add a host-side fixture for event ordering, reset/cancel/error and duplicate file selection before changing/removing it.  It does not by itself justify any MCU change or hardware flash. |
+
+### Test plan for the remaining paths
+
+1. Add a pure host Klipper-event fixture for the virtual-SD load/reset/error
+   contract and its `md5_checker`/timelapse consumers.  It must use synthetic
+   files and no Moonraker endpoint or MCU.
+2. Build the selected mainboard/eboard sources only after package provenance
+   and clean-build gates are met; record config and artifact hashes, but do
+   not flash them as a "test".
+3. During the dedicated read-only hardware session, first verify controller
+   markings, UART wiring/levels, the TVOC module's passive output, and the
+   eboard's observed reset/boot behavior.  No sensor reading may drive a
+   heater/motion decision, and no bootloader request is issued merely to
+   identify it.
+4. Only with recovery evidence may a separately approved operation exercise
+   MCU firmware/restart behavior.  A successful host build or static source
+   review never closes that gate.
+
 ## Hardware verification
 
 Not run.
