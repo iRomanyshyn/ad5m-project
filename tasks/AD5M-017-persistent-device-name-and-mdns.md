@@ -152,6 +152,23 @@ that installation invokes it only before fresh static-hostname creation. The
 test is host-side; no mDNS listener, DHCP lease, browser, camera or printer
 was run.
 
+### 2026-10-29 first-install discovery record
+
+After successful setup, the installer writes the non-secret
+`AD5M-ADDRESS.txt` file to the same mounted USB medium when one is available.
+It reads the persisted hostname from static state, validates it with the same
+helper, and records copy-ready current UI (`:4000`), Moonraker/slicer
+(`:7125`) and camera (`:8080`) URLs. It does not contain a password, API key,
+Wi-Fi credential, serial number or log dump. The installer log also records
+the generated hostname.
+
+This is the immediate discovery path, not the final UX: a future on-screen
+setup/status flow (including HelixScreen when it is integrated) must display
+and allow owner-initiated renaming of the current address. The USB record is
+available only when the stock installer mounted the installation medium; DHCP
+lease discovery remains the fallback. The static test confirms the record is
+written only to a mounted medium and only for a validated hostname.
+
 ## Hardware verification
 
 Not run.

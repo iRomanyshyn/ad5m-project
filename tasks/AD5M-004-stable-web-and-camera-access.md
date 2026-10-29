@@ -87,6 +87,13 @@ unique, not the shared build-time `AD5M` hostname. AD5M-017 now provides a
 first-install persistent-name generator; a real LAN-resolution test is still
 required before presenting this as a universal client guarantee.
 
+The immediate discovery UX is a non-secret `AD5M-ADDRESS.txt` file written to
+the installation USB after successful setup, containing the generated
+hostname and copy-ready current URLs. It is intentionally a bridge rather
+than a replacement for a printer-screen/network-status flow: users should not
+need to inspect a router or guess a random suffix once HelixScreen or another
+local status surface is available.
+
 Moonraker's [webcam API](https://moonraker.readthedocs.io/en/latest/external_api/webcams/)
 supports complete URLs or paths relative to Moonraker's host, and stores
 user-created webcam entries in its database.  A package must not overwrite
