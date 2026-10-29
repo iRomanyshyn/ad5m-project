@@ -13,11 +13,15 @@ firmware release.
 ## Context
 
 The project has enough source evidence to show that feature work must not
-outrun recovery, update and LAN-security controls.  In particular, the legacy
-image contains a shared root credential, broad Moonraker trust, automatic MCU
-flashing and a destructive USB install path.  AD5M-028 records the source
-baseline.  A plan that calls a build successful or an image installable before
-these gates is misleading.
+outrun recovery, update and LAN-security controls. In particular, the legacy
+image contains a shared root credential, broad Moonraker trust and a
+destructive USB install path. Ordinary installation and boot no longer flash
+MCUs automatically, and the installer now preflights archive integrity and the
+legacy free-space threshold before deletion. Those source-level improvements
+do not create an authenticated, transactional updater or resolve the retained
+explicit stock-transition/uninstall flashing path. AD5M-028 and
+AD5M-019/025/027 record the resulting baseline. A plan that calls a build
+successful or an image installable before these gates is misleading.
 
 This task records the work sequence so it can be resumed on another
 workstation without retaining a chat transcript.  It does not authorize a
@@ -66,10 +70,13 @@ installable on the user's printer:
 ## Work order
 
 1. Complete P0 (AD5M-028) and maintain this task as the dependency map.
-2. Complete P1 source/design work in this order: AD5M-030, AD5M-029 with
-   AD5M-016, AD5M-032, AD5M-033, AD5M-034, then AD5M-019/025/027
-   reconciliation.  AD5M-035 is an immediate software-only safety fix once
-   its narrow production disposition is approved.
+2. Complete the remaining P1 source/design work in this order: AD5M-030,
+   AD5M-029 with AD5M-016, AD5M-032, AD5M-033 and AD5M-034. The
+   AD5M-019/025/027 reconciliation is recorded as of 2026-10-29: normal MCU
+   auto-flashing and the arbitrary USB-root overlay are removed, and archive/
+   free-space preflight precedes deletion, but no signed transactional updater
+   or release manifest exists. AD5M-035 is an immediate software-only safety
+   fix once its narrow production disposition is approved.
 3. Implement P2 changes only after their owning design is accepted.  Prefer
    small static checks and deterministic artifacts over feature additions.
 4. Review the P3 checklist with the owner before any cable is connected to an
@@ -86,7 +93,7 @@ checkpoint, not a claim that the project is ready to install:
 
 | Area | Required non-hardware outcome | Current direction |
 | --- | --- | --- |
-| Privileged/update controls | Authenticated release/update design, removable-media boundary and explicit non-automatic MCU-operation contract | AD5M-019, AD5M-025, AD5M-027 and AD5M-034 define the direction; implementation/fault injection remains. |
+| Privileged/update controls | Authenticated release/update design, removable-media boundary and explicit non-automatic MCU-operation contract | AD5M-019, AD5M-025, AD5M-027 and AD5M-034 define the direction. Normal-path MCU auto-flashing and the arbitrary USB-root overlay are removed; transactional implementation/fault injection and the legacy stock-transition recovery boundary remain. |
 | Identity and LAN access | Per-printer SSH credential and a documented first-claim Moonraker/browser path; after first user, credentials/API key rather than LAN IP are the access boundary | AD5M-016, AD5M-017 and AD5M-029; a disposable non-printer validation is still required. |
 | External network | Complete boot/scheduled egress inventory and owner-controlled capability policy | AD5M-032 records the first profile; public NTP is no longer an implicit default, while an owner-selectable path remains. |
 | Runtime provenance | Reviewed disposition for Klipper deltas, local patches and every binary module | AD5M-030/035 have a concrete immediate safety fix; AD5M-033 remains blocked on vendor kernel source/config provenance. |
