@@ -126,6 +126,30 @@ bench serial setting. It does not establish an AD5M connector, pinout, voltage
 level, boot log, UART speed, FEL availability or recovery capability. The tool
 was syntax-checked only; no adapter or printer was connected in this work.
 
+### P3 bench-record template
+
+Record this once per chosen adapter, with the adapter disconnected from every
+printer, SBC and debugger target. Store the completed record in a local,
+ignored note or attach its non-secret facts to this task; do not store terminal
+logs that may later contain credentials.
+
+```text
+date/time and workstation:
+adapter make/model and visible USB identifier:
+selected adapter voltage marking/switch position: 3.3 V / verified how:
+host device path used:
+only physical connection during test: TX shorted to RX; VCC disconnected
+command/version of uart-loopback-check.sh:
+result at 115200 8N1: pass / fail
+host permissions or driver issue, if any:
+```
+
+An incomplete or failed record means only that the adapter is not ready for a
+printer session. A successful record is not permission to choose an AD5M
+header, attach SWD/FEL, power a target, read a boot log or change storage. The
+first printer session must still use the read-only AD5M-024/031 entry record,
+verified connector evidence and its stop conditions.
+
 ## Remaining work
 
 1. Inventory the user's available equipment (at minimum, USB-to-UART adapter
