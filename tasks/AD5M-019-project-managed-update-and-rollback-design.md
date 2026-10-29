@@ -219,6 +219,52 @@ mismatch; and an otherwise-valid release declaring an MCU operation. These
 fixtures prove parser/verifier behavior only. They do not establish storage
 atomicity, target crypto behavior, boot, recovery or printer safety.
 
+### Proposed v1 update-transaction journal (2026-10-29)
+
+The signed manifest identifies what may be staged; a separate mutable journal
+records what actually happened on this printer. It lives in an
+implementation-defined persistent location outside both release roots and the
+candidate's writable state. The exact partition, filesystem and available
+space are not yet evidenced, so this section deliberately does not assign a
+path or claim that rename/fsync semantics are sufficient on the AD5M target.
+
+The journal contains a small `transaction-v1` record: opaque operation ID,
+candidate and known-good release IDs, current state, monotonic attempt number,
+bounded failure class, selected release-root identifiers, and only the state
+schema/migration IDs already declared by the verified manifest. It must not
+contain Wi-Fi secrets, Moonraker credentials/API keys, SSH keys, free-form
+tool output, URL query strings, raw removable-media paths, or a shell command.
+The record has a strict size cap and a closed enum for both states and failures.
+
+| State | Meaning | Restart behavior |
+| --- | --- | --- |
+| `idle` | No selected candidate; known-good remains selected. | Start known-good normally. |
+| `verified-staged` | Manifest and every payload verified in a private stage; no selector or persistent state changed. | Keep known-good selected; a later explicit confirmation may continue. |
+| `switch-pending` | A locally confirmed candidate selector change is about to occur. | Do not infer which root should run from a partial switch; use the independently durable selector or recovery path. |
+| `candidate-booting` | Candidate was selected but has not completed its bounded health check. | Consume an attempt. If the candidate cannot prove success within the bounded policy, select known-good without retrying it indefinitely. |
+| `candidate-healthy` | All release-pinned, local, non-MCU health probes passed. | Commit only after migration/selector evidence is durably recorded. |
+| `rollback-pending` | Candidate health, migration or boot failed after selection. | Select known-good before normal application services; retain a bounded diagnostic reason. |
+| `committed` | Candidate became the known-good release. | Start the committed release normally; retain only bounded history. |
+| `interrupted` | Journal or operation was incomplete, malformed, externally changed, or lost power at an unsafe point. | Never auto-resume or reapply. Boot the independently identified known-good release if possible; otherwise stop in the local recovery path. |
+
+Before every irreversible selector or persistent-state transition, the updater
+must durably write the predecessor and intended successor state. A proposed
+implementation may use a private same-directory temporary file, restricted
+permissions, flush/write ordering, atomic replacement and directory sync only
+after target-filesystem behavior is measured. It must reject symlinks, hard
+links, unexpected ownership and concurrent writers rather than relying on a
+best-effort lock. Interrupted, malformed or unknown state is fail-closed: it
+is not a reason to rerun extraction, migrations, network download, MCU tooling
+or a candidate boot automatically.
+
+The host-only journal test suite must inject loss before/after every write and
+selector step, duplicate operations, exhausted storage, malformed/oversized
+records, stale locks, unrecognized enums, counter exhaustion and a candidate
+that never reports healthy. Its expected result is a bounded visible failure
+and known-good/recovery selection, not an inference that the candidate or
+printer is safe. Storage atomicity, actual selector behavior and power-loss
+recovery remain hardware/disposable-image evidence.
+
 ### Candidate health-check boundary (reconciled 2026-10-29)
 
 The current init order includes the no-op `S54mcu_update`, then

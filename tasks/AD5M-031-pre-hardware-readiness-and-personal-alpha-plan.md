@@ -74,9 +74,10 @@ installable on the user's printer:
    AD5M-029 with AD5M-016, AD5M-032, AD5M-033 and AD5M-034. The
    AD5M-019/025/027 reconciliation is recorded as of 2026-10-29: normal MCU
    auto-flashing and the arbitrary USB-root overlay are removed, and archive/
-   free-space preflight precedes deletion, but no signed transactional updater
-   or release manifest exists. AD5M-035 is an immediate software-only safety
-   fix once its narrow production disposition is approved.
+   free-space preflight precedes deletion. AD5M-019 now specifies a signed
+   release-manifest and journal contract, but no verifier, signed artifact or
+   transactional updater exists. AD5M-035 is an immediate software-only
+   safety fix once its narrow production disposition is approved.
 3. Implement P2 changes only after their owning design is accepted.  Prefer
    small static checks and deterministic artifacts over feature additions.
 4. Review the P3 checklist with the owner before any cable is connected to an
