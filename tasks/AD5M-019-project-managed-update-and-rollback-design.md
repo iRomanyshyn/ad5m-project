@@ -159,6 +159,66 @@ canonical encoding and a release that is validly signed but incompatible with
 the device. A human-facing version string may be displayed, but it must not be
 used as the authorization decision or rollback ordering on its own.
 
+### Proposed v1 release-manifest contract (2026-10-29)
+
+This is a wire-format design, not an updater implementation or authority to
+sign/publish a release. It is deliberately a single project release unit, not
+a generic package manager or a component self-update protocol.
+
+A staged release directory has exactly these control files at its root:
+
+```text
+manifest.json
+manifest.ed25519
+payloads/<declared-artifact>
+```
+
+`manifest.ed25519` is an Ed25519 detached signature of the exact raw bytes of
+`manifest.json`, not of a reserialized parsed object and not of an enclosing
+USB/archive filename. The Buildroot SDK configuration currently selects
+libsodium, which makes this a plausible small verifier dependency, but no
+target binary, ABI or verifier has yet been built or accepted. The verifier
+must select a compiled-in public key by the manifest's `signing_key_id`; a key
+identifier is only a selector, never key material or an authority fetched from
+the network. Offline key addition/revocation requires a separately signed,
+versioned trust-root update and recovery evidence; v1 has no online key
+discovery or implicit rotation.
+
+The signed document is UTF-8 JSON generated in a deterministic canonical form
+for reproducible builds. Verification starts with the exact-byte signature,
+then parses with a duplicate-key-rejecting parser. It rejects unknown fields
+in security/compatibility objects, non-finite numbers, non-ASCII artifact
+paths, control characters, `.`/`..`, empty path components, absolute paths,
+symlinks, hard links and every on-disk file not listed below. Signing raw bytes
+means canonical serialization aids reproducibility but is not the security
+boundary; parser behavior cannot silently reinterpret unsigned bytes.
+
+| Manifest area | Required v1 fields | Verifier rule |
+| --- | --- | --- |
+| Format/identity | `format: "ad5m-release-v1"`, opaque `release_id`, display-only `created_at`, `signing_key_id` | Require exact format; release ID is compared as an opaque immutable identifier, never lexicographically as a version. |
+| Device compatibility | explicit supported model/board/stock-host identifiers and a state-schema compatibility range | Reject unknown target identity or schema. The exact vendor identifiers remain an AD5M-024/026 hardware-discovery input; no guessed `AD5M` string is a compatibility proof. |
+| Build provenance | all three repository revisions, reviewed Buildroot contract revision, selected variant, enabled components and patch/source inventory | Treat as audit evidence bound to the release, not as an instruction to fetch Git content or resolve a branch. |
+| Persistent state | current schema, accepted predecessor range, migration ID(s), and rollback-compatible range | Reject a candidate whose declared migration cannot safely return to the known-good schema. The manifest contains identifiers only; it never embeds arbitrary migration shell/Python. |
+| MCU declaration | `mcu_firmware_operation: "none"` | v1 rejects every other value. The declaration does not hide the separately unresolved normal `S55` boot/reset dependency. |
+| Payload inventory | for every payload: ASCII relative path below `payloads/`, byte length, SHA-256, media type and declared role | Verify size and digest while staging; reject missing, duplicate, extra or link payloads before extraction/switch. No payload path may select an executable, shell command or destination path from unsigned metadata. |
+| Update policy | minimum free-space requirement, required confirmation, and whether a controlled restart is required | These only constrain the updater; they cannot authorize print interruption, network access, MCU flashing or a migration outside the signed inventory. |
+
+The outer transport may be an HTTPS download, a USB file or a later project
+mirror, but it is only a byte carrier. The verifier must first unpack into a
+new private staging directory without following links, require exactly the
+control-file layout, verify the signature, parse/validate the manifest, and
+then hash every payload before a candidate root or persistent state changes.
+It must not execute `manifest.json`, a release note, an archive hook, a
+payload name, or a component-provided installer.
+
+The source-only v1 verification test matrix must include: modified manifest;
+wrong key ID/signature; duplicate JSON key; unsupported format; malformed
+UTF-8; unknown compatibility field; incompatible board/schema; duplicate,
+missing or extra payload; traversal/link payload; size mismatch; digest
+mismatch; and an otherwise-valid release declaring an MCU operation. These
+fixtures prove parser/verifier behavior only. They do not establish storage
+atomicity, target crypto behavior, boot, recovery or printer safety.
+
 ### Candidate health-check boundary (reconciled 2026-10-29)
 
 The current init order includes the no-op `S54mcu_update`, then
