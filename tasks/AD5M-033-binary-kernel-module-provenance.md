@@ -86,6 +86,16 @@ introduction history and boot-time load site were inspected without loading
 the modules.  The required source/config provenance and reproducible rebuild
 evidence are still absent.
 
+2026-10-29: the integration validation gained a deliberately narrow legacy
+module inventory. It pins the three known overlay module filenames and
+SHA-256 values, rejects an added, removed or changed overlay `.ko`, and checks
+that the chroot boot script names fixed paths for those three modules rather
+than constructing an overlay module path from a variable. This catches silent
+binary drift and unreviewed expansion of the legacy blob set; it does **not**
+establish source provenance, inspect behavior, prove ABI compatibility or make
+the blobs acceptable for broad release. `make validate` passed on the host;
+no module was loaded or target kernel used.
+
 ## Hardware verification
 
 Not run.  Any final removal/replacement requires hardware validation of the
