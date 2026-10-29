@@ -103,6 +103,29 @@ programmer cannot safely be selected without that evidence.
 probe, FEL command, UART connection, image read/write or MCU operation was
 performed.
 
+### 2026-10-29 bench UART-loopback aid
+
+`ad5m_enhanced_mod/tools/uart-loopback-check.sh` provides a deliberately
+limited host-side check for a USB-UART adapter. It accepts one explicit
+`/dev/tty*` character-device path and refuses to write unless the caller sets
+`AD5M_UART_LOOPBACK_CONFIRM=TX_RX_SHORTED`. With the adapter disconnected
+from all targets, configured for 3.3 V where applicable, and only its TX/RX
+pins shorted together, it sends a nonce at 115200 8N1 and requires the same
+line back. It restores the prior serial settings on exit.
+
+Example, after identifying the actual adapter path:
+
+```sh
+cd ad5m_enhanced_mod
+AD5M_UART_LOOPBACK_CONFIRM=TX_RX_SHORTED \
+  ./tools/uart-loopback-check.sh /dev/ttyUSB0
+```
+
+A pass establishes only host adapter, permissions, TX/RX loop and the chosen
+bench serial setting. It does not establish an AD5M connector, pinout, voltage
+level, boot log, UART speed, FEL availability or recovery capability. The tool
+was syntax-checked only; no adapter or printer was connected in this work.
+
 ## Remaining work
 
 1. Inventory the user's available equipment (at minimum, USB-to-UART adapter
