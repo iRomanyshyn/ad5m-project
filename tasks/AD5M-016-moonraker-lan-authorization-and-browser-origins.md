@@ -265,6 +265,31 @@ This is configuration/source
 evidence only.  No Moonraker process, browser, HTTP client, slicer,
 WebSocket, update transition or printer was run.
 
+2026-10-29: a portable `moonraker-auth-contract` host target was added to the
+integration repository. It requires an explicit `MOONRAKER_SOURCE_DIR`, checks
+that the source's `authorization.py` SHA-256 and the package pin both match
+`71f9e677b81afcc6b99dd5002f595025c38edc7b`, then imports that exact component
+with only database, event-loop, HTTP and cryptography *boundary* fakes. Against
+an ephemeral in-memory table it proved these component-level outcomes:
+
+1. the configured trusted range is accepted while the table contains only
+   Moonraker's API-key pseudo-user;
+2. creating a normal user persists it and immediately makes an unauthenticated
+   request fail with HTTP 401, including when it carries a forged
+   `X-Forwarded-For` header;
+3. the API-key and JWT control-flow branches authenticate after that
+   transition; and
+4. reconstructing the authorization component over the same table retains the
+   user and API key, rather than reopening first claim.
+
+The target has no target-architecture dependencies and does not open a TCP
+listener, start Tornado/Moonraker, exercise a real Ed25519 implementation,
+perform browser CORS/WebSocket negotiation, upload from a slicer, or invoke an
+installer. It is therefore stronger than a textual source assertion but is not
+evidence of end-to-end HTTP/Tornado behavior, production cryptography, a full
+database migration, an image update, or physical-LAN behavior. Those remain
+separate acceptance work.
+
 ## Hardware verification
 
 Not run.
