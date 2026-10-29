@@ -128,7 +128,29 @@ the other.
 
 ## Verification
 
-Not run.
+### 2026-10-29 first-install generator
+
+The base image now supplies `usr/libexec/ad5m-device-name`. On a fresh
+installation only — when no persisted static hostname exists and the seed is
+the generic `AD5M` value — `install_steps.sh` generates
+`ad5m-<16 lowercase hexadecimal characters>` from eight bytes of
+`/dev/urandom`, validates it, writes it before `setup_static_data` persists
+`/etc/hostname`, and logs the chosen name. BusyBox `dd`, `od` and `tr` are
+enabled in the tracked configuration; this was checked before choosing the
+small helper.
+
+If randomness or validation fails, the installer retains the visible generic
+`AD5M` hostname rather than inventing a predictable identifier or attempting a
+late destructive rollback. This is not a collision-safe success state; the
+owner must rename it before treating mDNS as a stable identity. An already
+persisted hostname, including a legacy `AD5M` hostname, is never silently
+renamed by this logic.
+
+`make -C ad5m_enhanced_mod validate` runs the generator against deterministic
+eight-byte fixture input, checks valid/invalid labels, and statically asserts
+that installation invokes it only before fresh static-hostname creation. The
+test is host-side; no mDNS listener, DHCP lease, browser, camera or printer
+was run.
 
 ## Hardware verification
 
