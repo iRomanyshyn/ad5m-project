@@ -24,18 +24,20 @@ assertion that a printer has failed to flash.  The broader design remains
 unsafe for project updates because it performs automatic MCU flashing from a
 version marker; AD5M-019 owns removal of that authority from normal updates.
 
-The automatic paths are broader than the service name suggests:
+The historical automatic paths were broader than the service name suggested.
+The normal chroot boot/install triggers were removed on 2026-10-28: the
+base-image `S54mcu_update` slot is now a no-op and `install_steps.sh` does not
+start it. Host `S00klipper_mod` still calls `update_stock` before its legacy
+stock skip/remove paths when `check_stock` does not see the literal marker
+`stock`; the uninstall archive also invokes `update_stock`. Those are legacy
+stock-transition/recovery paths, not a release updater, and remain pending
+AD5M-026 evidence. Removing or rewriting them without a demonstrated stock
+boot/recovery route could itself create a brick path.
 
-- `install_steps.sh` runs `S54mcu_update` after copying the new chroot and any
-  USB overlay, so installation/reinstallation can cause a firmware operation.
-- `S54mcu_update` calls `update` whenever a retained Klipper host version
-  differs from its marker.
-- Host `S00klipper_mod` calls `update_stock` before marker-driven skip/remove
-  boot paths when `check_stock` does not see the literal marker `stock`.
-
-None of these triggers is proof of a deliberately selected, compatible
-mainboard-and-eboard artifact.  They must not survive into a first personal
-alpha as automatic behavior.
+Neither a version-marker mismatch nor a skip/remove marker is proof of a
+deliberately selected, compatible mainboard-and-eboard artifact. Normal
+candidate boot, installation and project update must never turn either signal
+into an MCU operation.
 
 ## Proposed MCU-operation contract
 
@@ -153,6 +155,21 @@ used as an automatic update mechanism.
 cannot call an update action and `install_steps.sh` cannot start that service.
 This was source-only validation; no target script, flash utility, serial
 device, controller or printer was executed.
+
+### 2026-10-29 remaining legacy-path boundary
+
+Source inspection reconfirmed that the only remaining shipped callers of
+`update_stock` are the host skip/remove transition and the uninstall archive.
+They are still capable of invoking the vendor tools automatically once that
+separate stock-transition action has been selected. They must not be reused
+for normal install, boot, rollback health checks or project release updates.
+The current script still starts its two board operations in parallel and uses
+a bare `wait`; its marker result is therefore not trustworthy after partial
+failure. The next implementation slice must either replace this legacy path
+with the serial, journaled contract above and host-only fake-tool tests, or
+retain it as an explicitly unsupported recovery exception until AD5M-026 has
+evidence. It must not silently claim the existing marker is a verified MCU
+identity.
 
 ## Hardware verification
 

@@ -61,14 +61,15 @@ destructive step.  It does not alter this task's conclusion: archive and
 storage preflight cannot make the legacy flow transactional after a candidate
 starts changing shared state or flashing MCU firmware.
 
-Its in-chroot setup also deliberately has semantics that an application update
-must not inherit. `install_steps.sh` copies an arbitrary user-provided USB
-overlay into `/` and then invokes `S54mcu_update`. That service calls
-`mcu_update.sh`, which flashes both printer MCUs whenever the persisted
-Klipper-version marker differs. The script's version marker is retained in the
-static database, but it is not an independently verified MCU-artifact identity.
-This flow is appropriate only to be audited separately as the existing
-installer; it cannot become a background or user-confirmed project updater.
+Its in-chroot setup deliberately has semantics that an application update must
+not inherit. Earlier revisions copied an arbitrary USB overlay into `/` and
+then invoked `S54mcu_update`, which flashed both MCUs on a retained
+Klipper-version mismatch. Both normal-path behaviours were removed on
+2026-10-28: the installer no longer imports a USB root overlay and S54 is a
+no-op. The old version marker remains neither an MCU-artifact identity nor an
+update authorization decision. Legacy stock-transition/uninstall flashing is
+separately constrained by AD5M-034/026 and cannot become a background or
+user-confirmed project updater.
 
 There is useful recovery-related context, but not a release rollback system:
 host `S00klipper_mod` can honor markers to boot stock once or remove the mod,
