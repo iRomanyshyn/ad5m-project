@@ -52,12 +52,14 @@ reproducibility result.
   is build configuration evidence, not confirmation of the hardware fitted to
   any particular printer.  The obsolete-looking generic `stm32-mod` inputs
   select an STM32F103 profile and must not be assumed to describe the target.
-- The three Klipper patches apply to distinct concerns: disable target-side
-  C-helper freshness rebuilding, provide a local build-version fallback, and
-  change `TRSYNC_TIMEOUT` from 25 ms to 100 ms.  The first two affect build
-  identity/runtime library freshness; the last changes homing communication
-  timing and needs a hardware safety argument.  Patch commit metadata and a
-  small diff are not a provenance or safety approval.
+- The first three Klipper patches apply to distinct concerns: disable
+  target-side C-helper freshness rebuilding, provide a local build-version
+  fallback, and change `TRSYNC_TIMEOUT` from 25 ms to 100 ms. The first two
+  affect build identity/runtime library freshness; the last changes homing
+  communication timing and needs a hardware safety argument. A fourth local
+  patch subsequently removes an unsafe raw load-cell diagnostic and bounds a
+  remaining MCU queue copy; AD5M-035 records that remediation. Patch commit
+  metadata and a small diff are not a provenance or safety approval.
 - The local build tree contains the expected post-patch `TRSYNC_TIMEOUT =
   0.100` and produced mainboard/eboard `.bin`, `.elf` and `.hex` files.  Its
   artifact hashes are deliberately not copied into a release record because
@@ -179,6 +181,25 @@ a complete reproducible historical diff.
 4. Only with recovery evidence may a separately approved operation exercise
    MCU firmware/restart behavior.  A successful host build or static source
    review never closes that gate.
+
+### Local-patch disposition (2026-10-29)
+
+The complete project-local Klipper patch set is now classified below. This is
+a source review of the patch text and package recipe, not an approval to alter
+the pinned fork, build a new artifact or flash either MCU.
+
+| Patch | Observed effect | Release disposition |
+| --- | --- | --- |
+| `0001-chelper-disable-build-check.patch` | `check_build_c_library()` returns the already installed `c_helper.so` rather than rebuilding it on the target. The package recipe removes that file and cross-builds a replacement before installing the Klipper tree. | Plausible constrained-target build adaptation, but not identity verification. A clean release record must bind the C-helper to its source/toolchain and SHA-256; do not accept an old target helper merely because runtime rebuilding is disabled. |
+| `0002-Retrieve-version-from-local-file-if-Git-version-is-unavailable.patch` | The MCU build uses `klippy/.version` when Git metadata is unavailable. The package writes the pinned `KLIPPER_VERSION` plus `Buildroot` before MCU build and target installation. | Acceptable only as a display/build-identification fallback. The text file is neither a signed source identity nor authorization to flash; the release manifest must bind the actual source, patches, configs and resulting artifacts. |
+| `0003-Relax-MCU-TRSYNC_TIMEOUT-for-ffad5m.patch` | Changes the multi-MCU trigger-sync timeout from 25 ms to 100 ms while retaining a 250 ms single-MCU timeout. The patch rationale says the AD5M has steppers and endstops on one MCU. | **Unresolved safety blocker.** The shipped configuration instead assigns X/Y step pulses to `mcu` but their endstops to `eboard`, so the asserted single-MCU rationale is not established by the active configuration. Do not retain, relax further, revert, or flash this timing change without a target measurement and a recovery-ready homing test plan. |
+| `0004-Remove-unsafe-loadcell-raw-diagnostic.patch` | Removes the arbitrary-text host G-code and matching MCU command, and rejects oversize input before copying into the 32-byte queue buffer. | Required source-level remediation under AD5M-035. On 2026-10-29 it applied with `patch --dry-run --fuzz=0` to the locally retained exact pinned source, and `make validate` checked the patch policy. It still needs a clean build with recorded artifact hashes and later targeted hardware validation before any mainboard flash. |
+
+The ignored local Buildroot staging directories inspected on 2026-10-29 still
+contained the pre-`0004` raw diagnostic. They are stale developer output, not
+evidence against the patch and not a release artifact. Their state is an
+explicit reminder that a clean build and a signed artifact inventory are
+required; no hash, binary or target tree from that output may be promoted.
 
 ## Hardware verification
 
