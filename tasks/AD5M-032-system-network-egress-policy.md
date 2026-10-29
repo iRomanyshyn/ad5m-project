@@ -137,6 +137,26 @@ boot-time third-party endpoint was found.  This is not packet-capture proof,
 does not cover opaque stock-host behavior, and does not establish runtime
 defaults inside every bundled application.
 
+2026-10-29: the opt-in NTP implementation was tightened before an
+owner-facing configuration flow exists. `S45ntpd` no longer sources its
+configuration as shell code. It reads exactly one `NTP_ENABLED` and one
+`NTP_SERVER` assignment, accepts only `0` or `1` for the former and a narrow
+hostname/address character set for the latter, and fails before starting
+`ntpd` on malformed, duplicate or missing settings. The shipped configuration
+remains `NTP_ENABLED=0` with an empty server. `make validate` exercised a
+hostile config containing a shell substitution and confirmed that no marker
+command runs; the malformed configuration is rejected instead.
+
+The same static validation now records the selected project's narrow runtime
+inventory: apart from the separately checked, disabled-by-default NTP service,
+project-owned init scripts contain no direct network-client invocation and the
+overlay installs no cron file. It also requires Moonraker's seed configuration
+to retain `provider: none` and omit `[update_manager]`, `[announcements]` and
+`[mqtt]`. This is an intentionally limited guard over project-owned startup
+and configuration, not a claim about every binary capability, Moonraker's
+unconfigured code paths, third-party UI code, or the opaque stock host. No
+target process, DNS query, packet capture or physical printer was used.
+
 ## Hardware verification
 
 Not run.  The final chosen profile needs target-level packet capture on an
