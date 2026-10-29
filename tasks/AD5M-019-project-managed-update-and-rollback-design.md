@@ -161,14 +161,20 @@ used as the authorization decision or rollback ordering on its own.
 
 ### Candidate health-check boundary (reconciled 2026-10-29)
 
-The current init order includes `S54mcu_update`, then Klipper (`S60`) and
-Moonraker (`S65`), followed by the web servers and camera service. `S54` is
-currently a no-op: ordinary installation and boot no longer flash either MCU.
-Klipper and Moonraker scripts fork their daemons and return immediately, so an
-init exit status still proves neither configuration loading nor Klippy
-connectivity. A future candidate profile must prohibit any MCU operation,
-including restoring an earlier `S54` implementation or adding an equivalent
-automatic firmware action. The retained version marker is not release
+The current init order includes the no-op `S54mcu_update`, then
+`S55mcu_boot`, Klipper (`S60`) and Moonraker (`S65`), followed by the web
+servers and camera service. Ordinary installation and boot no longer flash
+either MCU. However, `S55mcu_boot` still runs the opaque
+`boot_eboard_mcu` helper and asks the stock `NationsCommand` to reset the
+mainboard, in parallel. Source review has not established their exact
+board-level effects or whether the normal runtime can start without them. They
+must not be called MCU *flashing*, but they are serial MCU side effects that a
+staged-update design cannot ignore. Klipper and Moonraker scripts fork their
+daemons and return immediately, so an init exit status still proves neither
+configuration loading nor Klippy connectivity. A candidate health-check helper
+must not invoke any MCU tool. A future staged boot design must separately
+evidence or safely suppress the existing `S55` dependency, and must prohibit
+restoring an automatic flash path. The retained version marker is not release
 identity or update authorization.
 
 At the pinned Moonraker revision, its read-only `/server/info` response
@@ -241,12 +247,14 @@ choose the prior known-good release before normal services run.
   check, failed migration, missing runtime dependency or boot-loop must return
   to the previous known-good release without touching motion, heaters, MCU
   firmware or printer configuration safety limits.
-- Run a candidate under an update-specific profile that excludes MCU operation
-  entirely. The current `S54mcu_update` is a no-op, but the profile must make
-  a future regression fail closed. The health check must use only
-  release-pinned, local and read-only probes; it must not make camera, LAN,
-  cloud, telemetry or time synchronization a prerequisite for keeping a
-  release.
+- Run a candidate under an update-specific profile that excludes automatic MCU
+  flashing and any MCU action initiated by the update agent or health check.
+  `S54mcu_update` is a no-op, but the existing boot-time `S55mcu_boot` reset/
+  boot sequence is a separate unresolved dependency that must be evidenced or
+  safely suppressed before a staged candidate can claim a read-only boot path.
+  The health check must use only release-pinned, local and read-only probes;
+  it must not make camera, LAN, cloud, telemetry or time synchronization a
+  prerequisite for keeping a release.
 - Make rollback available through a local recovery path that does not need
   Internet, GitHub, upstream HelixScreen or a working touchscreen.
 - The update agent runs with the minimum necessary privilege, uses no shell
@@ -300,10 +308,12 @@ choose the prior known-good release before normal services run.
   authentication database or telemetry consent is silently reset.
 - No production path lets HelixScreen or another bundled application fetch and
   apply its own upstream release outside the project-managed updater.
-- No project-update path invokes MCU tooling, accepts an arbitrary USB root
-  overlay, or deletes the active chroot before the candidate is verified and
-  recoverable. A static test must fail if the candidate profile enables an MCU
-  operation, including a non-no-op `S54mcu_update`.
+- No project-update agent or health check invokes MCU flashing/reset tooling,
+  accepts an arbitrary USB root overlay, or deletes the active chroot before
+  the candidate is verified and recoverable. A static test must fail if the
+  candidate profile enables a non-no-op `S54mcu_update`; the separate `S55`
+  boot dependency must have explicit evidence or a verified suppressed profile
+  before candidate boot is considered read-only.
 - Automated tests cover integrity, state transitions, fault injection and
   rollback separately from physical printer evidence.
 

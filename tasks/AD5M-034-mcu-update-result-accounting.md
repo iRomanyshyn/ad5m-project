@@ -171,6 +171,24 @@ retain it as an explicitly unsupported recovery exception until AD5M-026 has
 evidence. It must not silently claim the existing marker is a verified MCU
 identity.
 
+### 2026-10-29 boot/reset distinction
+
+The removal of normal-path flashing did not make candidate boot wholly
+side-effect-free. The following init slot, `S55mcu_boot`, starts the opaque
+`boot_eboard_mcu` helper and invokes stock `NationsCommand ... -r` for the
+mainboard, in parallel with a bare `wait`. The checked source labels these as
+boot/reset operations rather than firmware upload, and this task does not
+claim otherwise. Their success state also does not write the MCU-version
+marker, so they are not the particular false-success accounting bug addressed
+by the proposed flashing journal.
+
+Nevertheless they are real serial-MCU operations before Klipper starts. Do
+not absorb them into an updater, call them a read-only health check, or assume
+they can be removed safely. AD5M-019 must account for them in a candidate boot
+profile, while AD5M-026/030 require board-specific read-only evidence of their
+necessity and effect. No `S55` command, helper, serial device or printer was
+run for this finding.
+
 ## Hardware verification
 
 Not run.  A final design requires a disposable, recovery-ready hardware test
