@@ -17,10 +17,13 @@ insufficient post-removal capacity could therefore turn a recoverable failed
 update into loss of the currently bootable project chroot.
 
 This task is a narrow guardrail, not the transactional updater promised by
-AD5M-019.  It does not establish a signed release identity, preserve a prior
-chroot through extraction/setup, or make MCU updating reversible.  In
-particular, candidate setup currently mutates shared persistent state and may
-invoke the MCU updater; calling this flow "rollback" would be misleading.
+AD5M-019. It does not establish a signed release identity, preserve a prior
+chroot through extraction/setup, or create rollback. Candidate setup still
+mutates shared persistent state after destructive replacement. Ordinary
+installation and boot no longer invoke an MCU updater, but legacy
+stock-transition/uninstall flashing remains a separately constrained recovery
+exception under AD5M-034/026; calling either flow "rollback" would be
+misleading.
 
 ## Immediate change
 
@@ -45,7 +48,10 @@ invoke the MCU updater; calling this flow "rollback" would be misleading.
   stock updater; it must not fetch code, trust a detached MD5 list, or execute
   USB-provided helpers.
 - Do not characterize this change as update authentication, atomic staging or
-  MCU rollback.  AD5M-019 remains the owning design task for those properties.
+  MCU rollback. AD5M-019 remains the owning design task for those properties.
+- Do not reintroduce automatic MCU flashing as part of this preflight or
+  normal installation. Any legacy stock-transition/uninstall flash operation
+  is outside this task's success criteria and remains subject to AD5M-034/026.
 - Validation must cover shell syntax and reject a source ordering regression.
 
 ## Verification
@@ -71,8 +77,9 @@ AD5M-026 recovery evidence.
 
 1. Stage a candidate without replacing the known-good root, then define an
    atomic selector and independently journaled health-check/rollback state.
-2. Split MCU flashing from candidate boot/health checks; no candidate may
-   flash an MCU merely to prove application health.
+2. Keep MCU flashing split from candidate boot/health checks; no candidate may
+   flash an MCU merely to prove application health, and a regression from the
+   current no-op normal path must be rejected by a static release-profile test.
 3. Add a signed manifest and artifact inventory, and test
    interruption/storage-failure cases under AD5M-019. The legacy arbitrary
    USB-root overlay was removed under AD5M-025; its removal is a source-only

@@ -45,21 +45,24 @@ therefore rejects independent in-application apply before this task is
 completed, and AD5M-018 requires the upstream update checker/self-updater not
 to bypass the project-managed release boundary.
 
-### Current installer baseline audit (2026-10-27)
+### Current installer baseline audit (reconciled 2026-10-29)
 
 The current USB installer is an initial-install/reinstall mechanism, not a
 candidate transactional updater. Static inspection of
-`device_files/install/flashforge_init.sh` shows that it removes the active
-host init entry and `/data/.klipper_mod/chroot` *before* checking free space or
-unpacking the new `chroot.tar.xz`. It prints MD5 digests for logging but has no
-embedded expected digest, signature verification, alternate release slot,
-candidate health check or rollback selection. A space, archive or setup
-failure after that deletion can therefore leave no prior chroot to boot.
+`device_files/install/flashforge_init.sh` shows that it tests the compressed
+root with `xz -t`, lists its tar stream, and checks the legacy free-space
+threshold *before* removing the active host init entry and
+`/data/.klipper_mod/chroot`. It then destructively replaces the active root.
+It prints MD5 digests for logging but has no embedded expected digest,
+signature verification, alternate release slot, candidate health check or
+rollback selection. Thus a failed preflight preserves the prior chroot, but a
+failure during or after destructive replacement can still leave no prior
+chroot to boot.
 
-AD5M-027 introduces a deliberately limited preflight guard before that
-destructive step.  It does not alter this task's conclusion: archive and
-storage preflight cannot make the legacy flow transactional after a candidate
-starts changing shared state or flashing MCU firmware.
+AD5M-027 introduced that deliberately limited preflight guard before the
+destructive step. It does not alter this task's conclusion: archive and
+storage preflight cannot make the legacy flow transactional after destructive
+replacement begins or a candidate starts changing shared state.
 
 Its in-chroot setup deliberately has semantics that an application update must
 not inherit. Earlier revisions copied an arbitrary USB overlay into `/` and
@@ -156,16 +159,17 @@ canonical encoding and a release that is validly signed but incompatible with
 the device. A human-facing version string may be displayed, but it must not be
 used as the authorization decision or rollback ordering on its own.
 
-### Candidate health-check boundary (2026-10-27)
+### Candidate health-check boundary (reconciled 2026-10-29)
 
-The current init order starts `S54mcu_update`, then Klipper (`S60`) and
-Moonraker (`S65`), followed by the web servers and camera service. The Klipper
-and Moonraker scripts fork their daemons and return immediately, so an init
-exit status proves neither configuration loading nor Klippy connectivity.
-More seriously, the current `S54mcu_update` will flash MCUs when its retained
-Klipper-version marker differs. A candidate booted only to assess health must
-therefore use an update-specific boot profile that explicitly excludes that
-service and any equivalent automatic firmware action.
+The current init order includes `S54mcu_update`, then Klipper (`S60`) and
+Moonraker (`S65`), followed by the web servers and camera service. `S54` is
+currently a no-op: ordinary installation and boot no longer flash either MCU.
+Klipper and Moonraker scripts fork their daemons and return immediately, so an
+init exit status still proves neither configuration loading nor Klippy
+connectivity. A future candidate profile must prohibit any MCU operation,
+including restoring an earlier `S54` implementation or adding an equivalent
+automatic firmware action. The retained version marker is not release
+identity or update authorization.
 
 At the pinned Moonraker revision, its read-only `/server/info` response
 reports `klippy_connected`, `klippy_state`, `failed_components` and
@@ -220,10 +224,11 @@ choose the prior known-good release before normal services run.
   printing, pause/recovery, firmware flashing, calibration or an uncertain
   printer state. An update must never override a print-safety state merely to
   meet a schedule.
-- Do not reuse the current destructive USB installer, its arbitrary overlay
-  copy, or its version-marker-driven automatic MCU flashing as an update
-  primitive. Project updates must treat MCU firmware as a separate,
-  explicitly reviewed safety-critical operation.
+- Do not reuse the current destructive USB installer as an update primitive.
+  Its former arbitrary overlay copy and version-marker-driven automatic MCU
+  flashing were removed from normal paths, but their removal does not supply
+  staging, authorization or rollback. Project updates must treat MCU firmware
+  as a separate, explicitly reviewed safety-critical operation.
 - Preserve documented per-printer user state, including network identity,
   Moonraker database/authentication, G-code, HelixScreen layout/consent and
   other explicitly selected configuration. Migrations must be versioned,
@@ -236,8 +241,9 @@ choose the prior known-good release before normal services run.
   check, failed migration, missing runtime dependency or boot-loop must return
   to the previous known-good release without touching motion, heaters, MCU
   firmware or printer configuration safety limits.
-- Run a candidate under an update-specific profile that excludes the current
-  version-marker-driven `S54mcu_update` flow. The health check must use only
+- Run a candidate under an update-specific profile that excludes MCU operation
+  entirely. The current `S54mcu_update` is a no-op, but the profile must make
+  a future regression fail closed. The health check must use only
   release-pinned, local and read-only probes; it must not make camera, LAN,
   cloud, telemetry or time synchronization a prerequisite for keeping a
   release.
@@ -294,9 +300,10 @@ choose the prior known-good release before normal services run.
   authentication database or telemetry consent is silently reset.
 - No production path lets HelixScreen or another bundled application fetch and
   apply its own upstream release outside the project-managed updater.
-- No project-update path invokes `S54mcu_update`, accepts an arbitrary USB
-  root overlay, or deletes the active chroot before the candidate is verified
-  and recoverable.
+- No project-update path invokes MCU tooling, accepts an arbitrary USB root
+  overlay, or deletes the active chroot before the candidate is verified and
+  recoverable. A static test must fail if the candidate profile enables an MCU
+  operation, including a non-no-op `S54mcu_update`.
 - Automated tests cover integrity, state transitions, fault injection and
   rollback separately from physical printer evidence.
 
